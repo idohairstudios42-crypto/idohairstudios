@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   images: {
     remotePatterns: [
@@ -25,27 +24,18 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
     ],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ['image/webp'],
-    domains: ['images.unsplash.com', 'res.cloudinary.com'],
-    // Disable sharp optimization temporarily to avoid access violations
-    unoptimized: process.env.NODE_ENV === 'development',
   },
   // Production optimizations
-  swcMinify: true, // Use SWC minifier for faster builds
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production', // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
-    optimizeCss: true, // Optimize CSS
-    optimizeServerReact: true, // Optimize server-side React
-    scrollRestoration: true, // Improve scroll behavior
+    optimizeCss: true,
+    scrollRestoration: true,
   },
-  productionBrowserSourceMaps: false, // Disable source maps in production
-  // Add compression
   compress: true,
-  poweredByHeader: false, // Remove X-Powered-By header
+  poweredByHeader: false,
 }
 
 module.exports = nextConfig 
