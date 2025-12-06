@@ -88,3 +88,6 @@
 [2025-12-06T17:42:52.401Z] [DEBUG] [AUTH] Getting user from token
 [2025-12-06T17:42:52.402Z] [DEBUG] [AUTH] Retrieving token from cookies
 [2025-12-06T17:42:52.403Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-06T18:59:31.427Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T18:59:31.434Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T18:59:31.435Z] [DEBUG] [AUTH] Retrieving token from middleware request
