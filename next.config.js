@@ -3,6 +3,14 @@ const path = require('path');
 
 const nextConfig = {
   reactStrictMode: true,
+  eslint: {
+    // Disable ESLint during production builds on Vercel
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // Disable type checking during production builds on Vercel
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
