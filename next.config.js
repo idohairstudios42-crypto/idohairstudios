@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -36,6 +38,13 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  
+  webpack: (config, { isServer }) => {
+    // Add alias for @ to resolve to root directory
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    
+    return config;
+  },
 }
 
 module.exports = nextConfig 
