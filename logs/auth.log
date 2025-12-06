@@ -1,0 +1,81 @@
+[2025-04-17T18:04:24.198Z] [DEBUG] [AUTH] Getting user from token
+[2025-04-17T18:04:24.202Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-04-17T18:04:24.203Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-04-17T18:04:24.464Z] [DEBUG] [AUTH] Getting user from token
+[2025-04-17T18:04:24.466Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-04-17T18:04:24.467Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-04-17T18:04:24.480Z] [DEBUG] [AUTH] Getting user from token
+[2025-04-17T18:04:24.481Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-04-17T18:04:24.482Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-05-20T18:48:03.249Z] [DEBUG] [AUTH] Getting user from token
+[2025-05-20T18:48:03.251Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-05-20T18:48:03.253Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-05-20T18:48:03.544Z] [DEBUG] [AUTH] Getting user from token
+[2025-05-20T18:48:03.546Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-05-20T18:48:03.547Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-05-20T18:48:03.553Z] [DEBUG] [AUTH] Getting user from token
+[2025-05-20T18:48:03.554Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-05-20T18:48:03.555Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-10-03T12:56:21.994Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-03T12:56:22.004Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-03T12:56:22.005Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-10-03T12:56:22.205Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-03T12:56:22.208Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-03T12:56:22.209Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-10-03T12:56:22.224Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-03T12:56:22.225Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-03T12:56:22.226Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-10-04T00:49:53.197Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-04T00:49:53.200Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-04T00:49:53.201Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-10-04T00:49:53.481Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-04T00:49:53.484Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-04T00:49:53.485Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-10-04T00:49:53.491Z] [DEBUG] [AUTH] Getting user from token
+[2025-10-04T00:49:53.492Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-10-04T00:49:53.493Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:32:59.594Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:32:59.597Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:32:59.598Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-04T18:33:00.017Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:33:00.021Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:33:00.022Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:33:00.029Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:33:00.030Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:33:00.031Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:33:56.348Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:33:56.353Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:33:56.353Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-04T18:33:56.801Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:33:56.805Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:33:56.806Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:33:56.814Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:33:56.815Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:33:56.816Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:36:47.824Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:36:47.827Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:36:47.828Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-04T18:36:48.205Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:36:48.208Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:36:48.208Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-04T18:36:48.218Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-04T18:36:48.218Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-04T18:36:48.219Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-06T17:05:39.123Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:05:39.127Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:05:39.128Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-06T17:05:39.567Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:05:39.570Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:05:39.571Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-06T17:05:39.577Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:05:39.577Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:05:39.578Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-06T17:11:18.317Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:11:18.321Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:11:18.322Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-06T17:11:22.704Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:11:22.708Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:11:22.708Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-06T17:11:22.712Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-06T17:11:22.713Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-06T17:11:22.714Z] [DEBUG] [AUTH] Retrieving token from server action
