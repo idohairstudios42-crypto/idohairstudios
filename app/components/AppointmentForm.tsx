@@ -434,7 +434,7 @@ export default function AppointmentForm() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        email: `${formData.phone}@bookings.hair-engineer.com`, // Use a generated email if client doesn't provide one
+        email: `${formData.phone}@bookings.idohairstudios.com`, // Use a generated email if client doesn't provide one
         amount: priceToCharge,
         name: formData.name,
         phone: formData.phone,
