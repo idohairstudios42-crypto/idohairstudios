@@ -214,7 +214,7 @@ export default function Home() {
             >
               <h3 className="font-montserrat font-bold text-base uppercase mb-3 tracking-wider text-white">Services</h3>
               <div className="h-px bg-white/10 mb-4" />
-              <ul className="text-sm text-white/80 leading-relaxed list-disc pl-5 space-y-2">
+              <ul className="text-sm text-white/80 leading-relaxed list-disc pl-5 space-y-2 mb-4">
                 <li>Braids, Locs & Twists – Knotless, box braids, passion twists, butterfly locs, faux locs, soft locs, distressed locs, natural twists, stitch braids, & more.</li>
                 <li>Wig Making – Custom units engineered for perfect fit & longevity.</li>
                 <li>Wig Installations – Closure, frontal & Lagos hairline installs with natural finishes.</li>
@@ -227,6 +227,19 @@ export default function Home() {
                 <li>Beginner & Master Classes – Learn braids, wig-making & installs directly from I DO HAIR STUDIOS.</li>
                 <li>Luxury Hair Collection – Curated premium hair extensions for a flawless finish.</li>
               </ul>
+              <motion.button
+                onClick={() => {
+                  setAcceptedTerms(true);
+                  setTimeout(() => {
+                    document.getElementById('appointment-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 100);
+                }}
+                className="w-full py-2.5 text-center border border-white/30 bg-white/10 hover:bg-white/20 uppercase tracking-widest text-xs text-white hover:text-white transition-all duration-300 rounded-sm"
+                whileHover={{ scale: 1.02, boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)" }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Book Now
+              </motion.button>
             </motion.div>
 
           </motion.div>
@@ -493,7 +506,7 @@ export default function Home() {
           
           {/* Appointment form would appear when terms are accepted */}
           {acceptedTerms && (
-            <div className="w-full max-w-2xl mx-auto">
+            <div id="appointment-form" className="w-full max-w-2xl mx-auto scroll-mt-20">
               <AppointmentForm />
             </div>
           )}

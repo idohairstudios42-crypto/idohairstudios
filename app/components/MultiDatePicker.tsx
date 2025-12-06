@@ -110,7 +110,7 @@ export default function MultiDatePicker({
           <label className="text-sm">Max appointments per date:</label>
           <input
             type="number"
-            className="w-16 px-2 py-1 rounded border dark:bg-gray-700 dark:border-gray-600"
+            className="w-16 px-2 py-1 rounded border bg-white text-black dark:bg-white dark:text-black border-gray-300 dark:border-gray-600"
             value={maxAppointments}
             onChange={e => setMaxAppointments(parseInt(e.target.value) || 1)}
             min="1"
