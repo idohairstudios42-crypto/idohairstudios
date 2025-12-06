@@ -1,5 +1,5 @@
 {
-  "buildCommand": "echo '=== PWD ===' && pwd && echo '=== ROOT FILES ===' && ls -la && echo '=== APP DIR ===' && (ls -la app/ 2>&1 || echo 'NO APP DIR') && echo '=== APP/LIB ===' && (ls -la app/lib/ 2>&1 || echo 'NO LIB DIR') && echo '=== STARTING BUILD ===' && npm run build",
+  "buildCommand": "echo 'BUILD TIME:' $(date) && echo '=== PWD ===' && pwd && echo '=== ROOT FILES ===' && ls -la && echo '=== APP DIR ===' && (ls -la app/ 2>&1 || echo 'NO APP DIR') && echo '=== APP/LIB ===' && (ls -la app/lib/ 2>&1 || echo 'NO LIB DIR') && echo '=== STARTING BUILD ===' && npm run build",
   "devCommand": "next dev",
   "installCommand": "npm ci",
   "framework": "nextjs",
