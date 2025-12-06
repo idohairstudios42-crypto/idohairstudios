@@ -1,5 +1,5 @@
 {
-  "buildCommand": "ls -la app/lib && ls -la app/components && npm run build",
+  "buildCommand": "pwd && ls -la && ls -la app/ || echo 'app dir not found' && npm run build",
   "devCommand": "next dev",
   "installCommand": "npm ci",
   "framework": "nextjs",
