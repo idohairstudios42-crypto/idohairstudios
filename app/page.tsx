@@ -351,7 +351,7 @@ export default function Home() {
               </motion.div>
               
               {/* PREP */}
-              <motion.div 
+              {/* <motion.div 
                 className="bg-black/80 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-white/20 hover:border-white/40 transition-all duration-300"
                 whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)" }}
                 transition={{ duration: 0.2 }}
@@ -360,7 +360,7 @@ export default function Home() {
                 <p className="text-sm text-white/80 leading-relaxed">
                   Hair must be clean, detangled, well blow-dried and free of product build-up.
                 </p>
-              </motion.div>
+              </motion.div> */}
               
               {/* NO REFUNDS */}
               <motion.div 
