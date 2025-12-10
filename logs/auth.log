@@ -121,3 +121,12 @@
 [2025-12-06T19:22:53.097Z] [DEBUG] [AUTH] Getting user from token
 [2025-12-06T19:22:53.098Z] [DEBUG] [AUTH] Retrieving token from cookies
 [2025-12-06T19:22:53.099Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-10T16:48:27.262Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-10T16:48:27.266Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-10T16:48:27.267Z] [DEBUG] [AUTH] Retrieving token from middleware request
+[2025-12-10T16:48:27.768Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-10T16:48:27.771Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-10T16:48:27.775Z] [DEBUG] [AUTH] Retrieving token from server action
+[2025-12-10T16:48:27.792Z] [DEBUG] [AUTH] Getting user from token
+[2025-12-10T16:48:27.793Z] [DEBUG] [AUTH] Retrieving token from cookies
+[2025-12-10T16:48:27.794Z] [DEBUG] [AUTH] Retrieving token from server action
