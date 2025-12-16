@@ -99,6 +99,7 @@ export async function POST(request: Request) {
         service: service.name, // Use the found service name, not the input serviceId
         serviceCategory: metadata.serviceCategory || service.category,
         date: new Date(metadata.date),
+        time: metadata.time,
         preferredLength: metadata.preferredLength,
         hairColor: metadata.hairColor || 'black',
         totalAmount: amount,
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
         paymentStatus: 'unpaid',
         status: 'pending',
         paystackReference: reference,
+        addOns: metadata.addOns || [],
       };
 
       console.log('Creating pending appointment with data:', JSON.stringify(appointmentData));

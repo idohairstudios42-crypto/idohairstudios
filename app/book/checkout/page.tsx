@@ -78,7 +78,15 @@ export default function CheckoutPage() {
         e.preventDefault();
         if (!validateForm()) return;
 
+        // Prevent multiple simultaneous requests
+        if (loading) return;
+
         setLoading(true);
+
+        // Debug: Log the selectedTime value
+        console.log('DEBUG - Selected Time:', selectedTime);
+        console.log('DEBUG - Selected Date:', selectedDate);
+        console.log('DEBUG - Selected Add-ons:', selectedAddOns);
 
         try {
             // Open payment window first (must happen before async calls due to popup blockers)
@@ -108,6 +116,7 @@ export default function CheckoutPage() {
                         service: selectedStyle?.name,
                         serviceCategory: selectedStyle?.category,
                         date: selectedDate?.toISOString(),
+                        time: selectedTime,
                         preferredLength: formData.preferredLength,
                         snapchat: formData.snapchat,
                         whatsapp: formData.whatsapp,

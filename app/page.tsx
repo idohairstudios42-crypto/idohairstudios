@@ -51,7 +51,7 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white bg-glossy">
+    <div className="flex flex-col min-h-screen bg-black text-white bg-glossy overflow-x-hidden">
       {/* Font imports for Noto Serif Display */}
       <div
         dangerouslySetInnerHTML={{
@@ -132,12 +132,7 @@ export default function Home() {
       </div>
 
       {/* Responsive container for the rest of the content */}
-      <motion.div
-        className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 md:px-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
         {/* Mid section with profile image and text - since hero now has the profile image background, we don't need this part */}
         <div className="mt-10 mb-8">
           {/* Experience section */}
@@ -148,7 +143,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.9, duration: 0.5 }}
           >
-            <h2 className="script-font text-3xl mb-2 font-light text-gradient">EMPOWERING YOUR UNIQUE BEAUTY</h2>
+            <h2 className="font-montserrat text-2xl sm:text-3xl mb-2 font-semibold text-white tracking-wide">Empowering Your Unique Beauty</h2>
             <p className="text-[11px] sm:text-xs md:text-sm text-white/70 mb-3 leading-relaxed">
               Thank you for choosing I DO HAIR STUDIOS. Your trust and loyalty mean the world to me.
             </p>
@@ -169,7 +164,7 @@ export default function Home() {
 
         {/* Main content section */}
         <motion.section
-          className="flex-1 flex flex-col px-4 sm:px-6 serif-font"
+          className="flex-1 flex flex-col px-4 sm:px-6 serif-font overflow-hidden"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -284,8 +279,8 @@ export default function Home() {
             className="mb-10 font-lato"
             variants={itemVariants}
           >
-            <h2 className="text-center text-2xl mb-4 font-montserrat font-bold text-white">Testimonials</h2>
-            <div className="space-y-4 max-w-3xl mx-auto">
+            <h2 className="text-center text-xl mb-6 font-montserrat font-bold text-white">Testimonials</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="bg-black/60 border border-white/20 rounded-md p-4">
                 <p className="text-white mb-1">⭐️⭐️⭐️⭐️⭐️</p>
                 <p className="text-sm text-white/80">"My braids lasted 6 weeks and still looked neat. The best grip I've ever had." – Abena M.</p>
@@ -311,10 +306,10 @@ export default function Home() {
             variants={itemVariants}
           >
             <h2 className="text-center text-xl mb-2 font-montserrat font-bold text-white">Booking Policies</h2>
-            <p className="text-center text-sm text-white/70 mb-4 max-w-3xl mx-auto">
+            <p className="text-center text-sm text-white/70 mb-4 max-w-3xl mx-auto px-2">
               To give every client the best possible experience, please take note of our service policies:
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {/* PAYMENT */}
               <motion.div
                 className="bg-black/80 backdrop-blur-sm rounded-lg shadow-lg p-4 border border-white/20 hover:border-white/40 transition-all duration-300"
@@ -512,7 +507,7 @@ export default function Home() {
             </div>
           )}
         </motion.section>
-      </motion.div>
+      </div>
 
       {/* New Footer Section */}
       <footer className="w-full bg-black mt-20 pt-12 pb-6 border-t border-white/20">
@@ -570,7 +565,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   )
 }
 
