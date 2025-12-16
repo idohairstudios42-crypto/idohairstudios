@@ -38,7 +38,7 @@ async function initializeCollections(db: mongoose.Connection) {
     console.log('No collections found in database');
     return;
   }
-  
+
   const collectionNames = collections.map(c => c.collectionName);
   console.log('Existing collections:', collectionNames);
 
@@ -75,6 +75,15 @@ export const withCache = async <T>(
   return data;
 };
 
+// Invalidate cache entries matching a prefix
+export const invalidateCache = (prefix: string): void => {
+  const keysToDelete = Object.keys(cached.cache).filter(key => key.startsWith(prefix));
+  keysToDelete.forEach(key => {
+    delete cached.cache[key];
+  });
+  console.log(`Invalidated ${keysToDelete.length} cache entries with prefix: ${prefix}`);
+};
+
 async function connectDB(): Promise<typeof mongoose> {
   try {
     if (cached.conn) {
@@ -86,7 +95,7 @@ async function connectDB(): Promise<typeof mongoose> {
       // Mask credentials in logs
       const maskedUri = MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
       console.log('Connecting to MongoDB:', maskedUri);
-      
+
       const opts = {
         bufferCommands: false,
         maxPoolSize: 10, // Limit concurrent connections
@@ -104,7 +113,7 @@ async function connectDB(): Promise<typeof mongoose> {
       }).catch((error: any) => {
         // Clear the promise on error so we can retry
         cached.promise = null;
-        
+
         // Provide helpful error messages
         if (error.name === 'MongoServerSelectionError') {
           if (error.message?.includes('ENOTFOUND') || error.message?.includes('getaddrinfo')) {
@@ -131,7 +140,7 @@ async function connectDB(): Promise<typeof mongoose> {
           console.error('\n❌ MongoDB Connection Error:', error.name);
           console.error('   Error:', error.message);
         }
-        
+
         throw error;
       });
     }

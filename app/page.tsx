@@ -5,7 +5,7 @@ import AppointmentForm from './components/AppointmentForm'
 import { useState, useMemo, useCallback } from 'react'
 import { Phone, Mail, Heart, Sparkles, CalendarDays, Star, Instagram, MessageCircle, Video } from 'lucide-react'
 import { motion, Variants } from 'framer-motion'
-import InstagramReelsSlideshow from './components/InstagramReelsSlideshow'
+import TrendingStyles from './components/TrendingStyles'
 
 export default function Home() {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -126,9 +126,9 @@ export default function Home() {
         </motion.div>
       </header>
 
-      {/* Instagram Reels Slideshow - placed immediately after hero for maximum visibility */}
+      {/* Trending Styles Section - replaces Instagram Reels */}
       <div className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
-        <InstagramReelsSlideshow />
+        <TrendingStyles />
       </div>
 
       {/* Responsive container for the rest of the content */}
@@ -233,19 +233,14 @@ export default function Home() {
                 <li>Beginner & Master Classes – Learn braids, wig-making & installs directly from I DO HAIR STUDIOS.</li>
                 <li>Luxury Hair Collection – Curated premium hair extensions for a flawless finish.</li>
               </ul>
-              <motion.button
-                onClick={() => {
-                  setAcceptedTerms(true);
-                  setTimeout(() => {
-                    document.getElementById('appointment-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }, 100);
-                }}
-                className="w-full py-2.5 text-center border border-white/30 bg-white/10 hover:bg-white/20 uppercase tracking-widest text-xs text-white hover:text-white transition-all duration-300 rounded-sm"
+              <motion.a
+                href="/book"
+                className="w-full py-2.5 text-center border border-white/30 bg-white/10 hover:bg-white/20 uppercase tracking-widest text-xs text-white hover:text-white transition-all duration-300 rounded-sm block"
                 whileHover={{ scale: 1.02, boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)" }}
                 whileTap={{ scale: 0.98 }}
               >
                 Book Now
-              </motion.button>
+              </motion.a>
             </motion.div>
 
           </motion.div>

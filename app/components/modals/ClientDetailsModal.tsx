@@ -1,6 +1,6 @@
 'use client'
 
-import { X } from 'lucide-react'
+import { X, Clock, Sparkles } from 'lucide-react'
 import { formatAmount, formatDate } from '@/app/lib/utils'
 
 interface Appointment {
@@ -10,6 +10,7 @@ interface Appointment {
   whatsapp: string
   service: string
   date: string
+  time?: string
   status: string
   phone: string
   preferredLength: string
@@ -22,6 +23,10 @@ interface Appointment {
     date: string
     method: string
     note?: string
+  }>
+  addOns?: Array<{
+    name: string
+    price: number
   }>
   createdAt?: string
   updatedAt?: string
@@ -51,7 +56,7 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
         <div className="space-y-4 sm:space-y-6">
           {/* Personal Information */}
           <div className="space-y-2">
-            <h3 className="text-pink-400 text-xs sm:text-sm uppercase tracking-wider font-medium">Personal Information</h3>
+            <h3 className="text-white text-xs sm:text-sm uppercase tracking-wider font-medium">Personal Information</h3>
             <div className="grid grid-cols-1 gap-3 bg-gray-900/50 p-3 sm:p-4 rounded-lg border border-gray-800">
               <div>
                 <span className="text-gray-400 text-xs block">Name</span>
@@ -78,28 +83,55 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
 
           {/* Appointment Details */}
           <div className="space-y-2">
-            <h3 className="text-pink-400 text-xs sm:text-sm uppercase tracking-wider font-medium">Appointment Details</h3>
+            <h3 className="text-white text-xs sm:text-sm uppercase tracking-wider font-medium">Appointment Details</h3>
             <div className="grid grid-cols-1 gap-3 bg-gray-900/50 p-3 sm:p-4 rounded-lg border border-gray-800">
               <div>
                 <span className="text-gray-400 text-xs block">Service</span>
                 <span className="text-white font-medium">{formatServiceName(appointment.service)}</span>
               </div>
-              <div>
-                <span className="text-gray-400 text-xs block">Date</span>
-                <span className="text-white">{formatDate(appointment.date)}</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-gray-400 text-xs block">Date</span>
+                  <span className="text-white">{formatDate(appointment.date)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-xs block">Time</span>
+                  <span className="text-white flex items-center gap-1">
+                    <Clock size={12} className="text-gray-500" />
+                    {appointment.time || 'Not specified'}
+                  </span>
+                </div>
               </div>
               <div>
                 <span className="text-gray-400 text-xs block">Status</span>
-                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                  appointment.status === 'confirmed' 
-                    ? 'bg-green-500/20 text-green-300' 
+                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${appointment.status === 'confirmed'
+                    ? 'bg-green-500/20 text-green-300'
                     : appointment.status === 'pending'
-                    ? 'bg-yellow-500/20 text-yellow-300'
-                    : 'bg-red-500/20 text-red-300'
-                }`}>
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-red-500/20 text-red-300'
+                  }`}>
                   {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                 </span>
               </div>
+
+              {/* Add-ons Section */}
+              {appointment.addOns && appointment.addOns.length > 0 && (
+                <div>
+                  <span className="text-gray-400 text-xs block mb-2">Add-on Services</span>
+                  <div className="flex flex-wrap gap-2">
+                    {appointment.addOns.map((addon, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 bg-white/10 text-white text-xs px-2 py-1 rounded-full"
+                      >
+                        <Sparkles size={10} />
+                        {addon.name}
+                        {addon.price > 0 && <span className="text-gray-400 ml-1">GH₵{addon.price}</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -117,30 +149,28 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
               </div>
               <div>
                 <span className="text-gray-400 text-xs block">Balance</span>
-                <span className={`font-medium ${
-                  appointment.paymentStatus === 'full' 
-                    ? 'text-green-400' 
+                <span className={`font-medium ${appointment.paymentStatus === 'full'
+                    ? 'text-green-400'
                     : appointment.paymentStatus === 'partial'
-                    ? 'text-yellow-400'
-                    : 'text-red-400'
-                }`}>
+                      ? 'text-yellow-400'
+                      : 'text-red-400'
+                  }`}>
                   GHS {formatAmount((appointment.totalAmount || 0) - (appointment.amountPaid || 0))}
                 </span>
               </div>
               <div>
                 <span className="text-gray-400 text-xs block">Payment Status</span>
-                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
-                  appointment.paymentStatus === 'full' 
-                    ? 'bg-green-500/20 text-green-300' 
+                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${appointment.paymentStatus === 'full'
+                    ? 'bg-green-500/20 text-green-300'
                     : appointment.paymentStatus === 'partial'
-                    ? 'bg-yellow-500/20 text-yellow-300'
-                    : 'bg-red-500/20 text-red-300'
-                }`}>
-                  {appointment.paymentStatus === 'full' 
-                    ? 'Paid' 
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-red-500/20 text-red-300'
+                  }`}>
+                  {appointment.paymentStatus === 'full'
+                    ? 'Paid'
                     : appointment.paymentStatus === 'partial'
-                    ? 'Partial'
-                    : 'Unpaid'}
+                      ? 'Partial'
+                      : 'Unpaid'}
                 </span>
               </div>
             </div>
@@ -153,9 +183,9 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
               <div>
                 <span className="text-gray-400 text-xs block">Hair Color</span>
                 <div className="flex items-center mt-1">
-                  <span 
-                    className="inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full mr-2" 
-                    style={{backgroundColor: appointment.hairColor || 'black'}}
+                  <span
+                    className="inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full mr-2"
+                    style={{ backgroundColor: appointment.hairColor || 'black' }}
                   ></span>
                   <span className="text-white">{appointment.hairColor || 'Not specified'}</span>
                 </div>
@@ -179,9 +209,9 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
             </div>
           </div>
         </div>
-        
+
         <div className="mt-4 sm:mt-6 flex justify-end">
-          <button 
+          <button
             onClick={onClose}
             className="px-3 sm:px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm text-white transition flex items-center gap-2"
           >

@@ -17,6 +17,32 @@ const HairStyleSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: false,
+    default: 0,
+  },
+  description: {
+    type: String,
+    default: '',
+  },
+  imageUrl: {
+    type: String,
+    default: '',
+  },
+  imagePublicId: {
+    type: String,
+    default: '',
+  },
+  isTrending: {
+    type: Boolean,
+    default: false,
+  },
+  duration: {
+    type: String,
+    default: '',
+  },
+  imagePosition: {
+    type: String,
+    enum: ['top', 'center', 'bottom'],
+    default: 'top',
   },
   isActive: {
     type: Boolean,

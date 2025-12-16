@@ -5,12 +5,25 @@ const ServiceCategorySchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    uppercase: true, // Store categories in uppercase for consistency
+    uppercase: true,
     trim: true
   },
   description: {
     type: String,
     default: ''
+  },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  imagePublicId: {
+    type: String,
+    default: ''
+  },
+  imagePosition: {
+    type: String,
+    enum: ['top', 'center', 'bottom'],
+    default: 'top'
   },
   isActive: {
     type: Boolean,

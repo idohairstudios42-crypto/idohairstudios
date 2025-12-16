@@ -31,6 +31,11 @@ const AppointmentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  addOns: [{
+    name: { type: String },
+    price: { type: Number },
+    _id: { type: String }
+  }],
   hairColor: {
     type: String,
     required: true,
@@ -93,7 +98,7 @@ const AppointmentSchema = new mongoose.Schema({
 });
 
 // Add a pre-save middleware to automatically update payment status
-AppointmentSchema.pre('save', function(next) {
+AppointmentSchema.pre('save', function (next) {
   if (this.amountPaid === 0) {
     this.paymentStatus = 'unpaid';
   } else if (this.amountPaid < this.totalAmount) {

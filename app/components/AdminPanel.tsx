@@ -16,6 +16,7 @@ import { formatAmount, formatDate } from '@/app/lib/utils';
 
 // Lazy load components that aren't needed immediately
 const HairStylesManager = lazy(() => import('./HairStylesManager'))
+const AddOnServicesManager = lazy(() => import('./AddOnServicesManager'))
 const MultiDatePicker = lazy(() => import('./MultiDatePicker'))
 // Import modals from barrel file
 const PaymentModal = lazy(() => import('./modals/PaymentModal'))
@@ -29,6 +30,7 @@ interface Appointment {
   whatsapp: string
   service: string
   date: string
+  time?: string
   status: string
   phone: string
   preferredLength: string
@@ -42,6 +44,10 @@ interface Appointment {
     method: string
     note?: string
   }>
+  addOns?: Array<{
+    name: string
+    price: number
+  }>
   createdAt?: string
   updatedAt?: string
 }
@@ -53,7 +59,7 @@ interface AvailableDate {
   currentAppointments: number
 }
 
-type TabType = 'overview' | 'appointments' | 'dates' | 'styles' | 'settings'
+type TabType = 'overview' | 'appointments' | 'dates' | 'styles' | 'addons' | 'settings'
 
 export default function AdminPanel() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -101,7 +107,7 @@ export default function AdminPanel() {
           'Cache-Control': 'no-cache'
         }
       });
-      
+
       if (response.ok) {
         // Redirect to login page
         window.location.href = '/admin/login?logout=true';
@@ -121,7 +127,7 @@ export default function AdminPanel() {
       setLoading(true);
       try {
         await Promise.all([
-          fetchAppointments(), 
+          fetchAppointments(),
           fetchAvailableDates(),
           fetchSystemSettings()
         ]);
@@ -131,15 +137,15 @@ export default function AdminPanel() {
         setLoading(false);
       }
     };
-    
+
     loadData();
-    
+
     // Set up a refresh interval (every 5 minutes)
     const intervalId = setInterval(() => {
       fetchAppointments();
       fetchAvailableDates();
     }, 5 * 60 * 1000);
-    
+
     return () => clearInterval(intervalId);
   }, []);
 
@@ -162,7 +168,7 @@ export default function AdminPanel() {
   const categorizeAppointments = useCallback((appointments: Appointment[]) => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    
+
     const today = now.toDateString();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -237,11 +243,11 @@ export default function AdminPanel() {
 
   const updateSystemSettings = async () => {
     if (updatingSettings) return;
-    
+
     try {
       setUpdatingSettings(true);
       setError(null);
-      
+
       // Create a clean copy of the system settings without any potential circular references
       const settingsToUpdate = {
         paymentRequired: systemSettings.paymentRequired,
@@ -249,7 +255,7 @@ export default function AdminPanel() {
         defaultAppointmentStatus: systemSettings.defaultAppointmentStatus,
         defaultPrice: systemSettings.defaultPrice
       };
-      
+
       const response = await fetch('/api/system-settings', {
         method: 'POST',
         headers: {
@@ -257,16 +263,16 @@ export default function AdminPanel() {
         },
         body: JSON.stringify(settingsToUpdate)
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update system settings');
       }
-      
+
       const data = await response.json();
       setSystemSettings(data.settings || settingsToUpdate);
       setSuccess('System settings updated successfully');
-      
+
     } catch (error) {
       console.error('Error updating settings:', error);
       setError(error instanceof Error ? error.message : 'Failed to update settings');
@@ -288,7 +294,7 @@ export default function AdminPanel() {
       if (!response.ok) throw new Error('Failed to update appointment status')
       await fetchAppointments()
       setSuccess('Appointment status updated successfully')
-    router.refresh()
+      router.refresh()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to update appointment status'
       setError(message)
@@ -340,22 +346,22 @@ export default function AdminPanel() {
       setError(null)
       setSuccess(null) // Clear previous success message
       setDeletingDateId(dateToRemove._id) // Set the deleting state
-      
+
       const response = await fetch(`/api/available-dates?id=${dateToRemove._id}`, {
         method: 'DELETE',
       })
       if (!response.ok) throw new Error('Failed to remove available date')
-      
+
       // Wait a moment for animation to complete
       setTimeout(async () => {
-      const data = await response.json()
-      // Update the state with the new dates list from the response
-      if (data.dates) {
-        setAvailableDates(data.dates)
-      } else {
-        // Fallback to fetching dates if response doesn't include them
-        await fetchAvailableDates()
-      }
+        const data = await response.json()
+        // Update the state with the new dates list from the response
+        if (data.dates) {
+          setAvailableDates(data.dates)
+        } else {
+          // Fallback to fetching dates if response doesn't include them
+          await fetchAvailableDates()
+        }
         setSuccess(`Date removed successfully: ${format(new Date(dateToRemove.date), 'MMM d, yyyy')}`)
         setDeletingDateId(null) // Reset deleting state
       }, 300)
@@ -375,10 +381,10 @@ export default function AdminPanel() {
     try {
       setError(null);
       setDeletingAppointmentId(id); // Set deleting state
-      
+
       // Create a slight delay before actual deletion to allow animation to be noticed
       await new Promise(resolve => setTimeout(resolve, 600));
-      
+
       const response = await fetch(`/api/appointments?id=${id}`, {
         method: 'DELETE',
       });
@@ -479,7 +485,7 @@ export default function AdminPanel() {
         <div className="px-4 py-3 bg-black/60 border-b border-pink-500/20">
           <h3 className="font-['Noto_Serif_Display'] text-lg font-semibold text-pink-300">{title} ({appointments.length})</h3>
         </div>
-        
+
         <div className="table-fixed-height custom-scrollbar">
           <table className="min-w-full divide-y divide-pink-500/10 table-sticky-header table-zebra table-hover">
             <thead className="bg-black sticky top-0 z-10">
@@ -493,20 +499,20 @@ export default function AdminPanel() {
             <tbody className="divide-y divide-pink-500/10">
               {appointments.length === 0 ? (
                 <tr>
-                <td colSpan={4} className="text-center py-4 text-gray-400 font-['Noto_Serif_Display'] italic">No appointments found</td>
+                  <td colSpan={4} className="text-center py-4 text-gray-400 font-['Noto_Serif_Display'] italic">No appointments found</td>
                 </tr>
               ) : (
-              appointments.map(appointment => (
-                <motion.tr 
-                  key={appointment._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ 
-                    opacity: deletingAppointmentId === appointment._id ? 0.3 : 1,
-                    y: 0,
-                    x: deletingAppointmentId === appointment._id ? 50 : 0,
-                    scale: deletingAppointmentId === appointment._id ? 0.95 : 1,
-                    backgroundColor: deletingAppointmentId === appointment._id ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
-                  }}
+                appointments.map(appointment => (
+                  <motion.tr
+                    key={appointment._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{
+                      opacity: deletingAppointmentId === appointment._id ? 0.3 : 1,
+                      y: 0,
+                      x: deletingAppointmentId === appointment._id ? 50 : 0,
+                      scale: deletingAppointmentId === appointment._id ? 0.95 : 1,
+                      backgroundColor: deletingAppointmentId === appointment._id ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                    }}
                     transition={{ duration: 0.2 }}
                     className="hover:bg-pink-500/5"
                   >
@@ -535,52 +541,52 @@ export default function AdminPanel() {
                     <td className="py-2 px-3 text-right">
                       <div className="flex justify-end space-x-1 sm:space-x-2">
                         <button
-                        onClick={() => {
-                          setSelectedAppointment(appointment);
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
                             setShowPaymentModal(true);
-                        }}
+                          }}
                           className="p-1 text-pink-300 hover:text-pink-100 hover:bg-pink-900/30 rounded"
                           title="Update Payment"
-                      >
+                        >
                           <DollarSign size={16} />
                         </button>
-                      <button
-                        onClick={() => {
-                          setSelectedAppointment(appointment);
+                        <button
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
                             setShowPaymentHistory(true);
-                        }}
+                          }}
                           className="p-1 text-blue-300 hover:text-blue-100 hover:bg-blue-900/30 rounded"
                           title="View Payment History"
-                      >
+                        >
                           <History size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedAppointment(appointment);
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
                             setShowClientDetails(true);
-                        }}
+                          }}
                           className="p-1 text-green-300 hover:text-green-100 hover:bg-green-900/30 rounded"
                           title="View Client Details"
-                      >
+                        >
                           <Users size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAppointment(appointment._id)}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAppointment(appointment._id)}
                           className="p-1 text-red-300 hover:text-red-100 hover:bg-red-900/30 rounded"
                           title="Delete Appointment"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
-                </motion.tr>
+                  </motion.tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
       </div>
-    </div>
-  )
+    )
   }, [deletingAppointmentId]);
 
   const downloadCSV = () => {
@@ -696,7 +702,7 @@ export default function AdminPanel() {
     try {
       setError(null);
       setAddingDate(true);
-      
+
       const response = await fetch('/api/available-dates', {
         method: 'POST',
         headers: {
@@ -728,20 +734,20 @@ export default function AdminPanel() {
   // Fix method for deleting dates
   const handleDeleteDate = async (dateId: string) => {
     if (!dateId) return;
-    
+
     try {
       setDeletingDateId(dateId);
       setError(null);
-      
+
       const response = await fetch(`/api/available-dates?id=${dateId}`, {
         method: 'DELETE'
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete date');
       }
-      
+
       await fetchAvailableDates();
       setSuccess('Date deleted successfully');
     } catch (error) {
@@ -794,63 +800,68 @@ export default function AdminPanel() {
         <div className="flex flex-wrap gap-1 sm:gap-2 bg-black border border-pink-500/20 rounded-lg p-1 overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-              activeTab === 'overview' 
-                ? 'bg-pink-500/20 text-pink-300' 
-                : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
-            }`}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'overview'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
           >
             <Home size={16} className="mr-1.5" />
             Overview
           </button>
           <button
             onClick={() => setActiveTab('appointments')}
-            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-              activeTab === 'appointments' 
-                ? 'bg-pink-500/20 text-pink-300' 
-                : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
-            }`}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'appointments'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
           >
             <Clock size={16} className="mr-1.5" />
             Appointments
           </button>
           <button
             onClick={() => setActiveTab('dates')}
-            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-              activeTab === 'dates' 
-                ? 'bg-pink-500/20 text-pink-300' 
-                : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
-            }`}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'dates'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
           >
             <CalendarIcon className="h-4 w-4 mr-1.5" />
             Available Dates
           </button>
           <button
             onClick={() => setActiveTab('styles')}
-            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-              activeTab === 'styles' 
-                ? 'bg-pink-500/20 text-pink-300' 
-                : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
-            }`}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'styles'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
           >
             <Star size={16} className="mr-1.5" />
             Hair Styles
           </button>
           <button
+            onClick={() => setActiveTab('addons')}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'addons'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
+          >
+            <Plus size={16} className="mr-1.5" />
+            Add-ons
+          </button>
+          <button
             onClick={() => setActiveTab('settings')}
-            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
-              activeTab === 'settings' 
-                ? 'bg-pink-500/20 text-pink-300' 
-                : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
-            }`}
+            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${activeTab === 'settings'
+              ? 'bg-pink-500/20 text-pink-300'
+              : 'hover:bg-pink-500/10 text-gray-300 hover:text-pink-200'
+              }`}
           >
             <Settings size={16} className="mr-1.5" />
             Settings
           </button>
         </div>
-        
+
         {/* Logout button */}
-          <button
+        <button
           onClick={handleLogout}
           className="flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium bg-black border border-pink-500/20 hover:bg-pink-500/10 text-pink-300 transition-all duration-200"
         >
@@ -867,7 +878,7 @@ export default function AdminPanel() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-pink-300">Available Dates</h2>
           <div className="flex flex-wrap gap-2">
-            <button 
+            <button
               onClick={() => setShowMultiDatePicker(true)}
               className="flex items-center px-3 py-1.5 bg-pink-500 hover:bg-pink-600 text-white rounded-md text-sm shadow-sm"
             >
@@ -880,9 +891,9 @@ export default function AdminPanel() {
             >
               <PlusIcon className="h-4 w-4 mr-1.5" />
               Add Single Date
-          </button>
+            </button>
+          </div>
         </div>
-      </div>
 
         {addingDate && (
           <div className="p-4 mb-4 border border-pink-500/20 rounded-lg bg-black">
@@ -894,7 +905,7 @@ export default function AdminPanel() {
                   onChange={(date: Date) => setNewDate(date.toISOString())}
                   dateFormat="MMMM d, yyyy"
                   minDate={new Date()}
-                className="px-3 py-2 bg-black border border-pink-500/20 rounded-md w-full text-sm"
+                  className="px-3 py-2 bg-black border border-pink-500/20 rounded-md w-full text-sm"
                   placeholderText="Select date..."
                   showMonthDropdown
                   showYearDropdown
@@ -905,7 +916,7 @@ export default function AdminPanel() {
                   onKeyDown={(e) => e.preventDefault()}
                   calendarClassName="admin-date-picker"
                 />
-              <p className="mt-2 text-xs text-gray-400">Use the calendar to pick a date. Typing is disabled.</p>
+                <p className="mt-2 text-xs text-gray-400">Use the calendar to pick a date. Typing is disabled.</p>
               </div>
               <div className="w-full sm:w-auto">
                 <label className="block text-sm font-medium mb-1 text-gray-300">Max Appointments</label>
@@ -933,14 +944,14 @@ export default function AdminPanel() {
                 </button>
               </div>
             </div>
-        </div>
-      )}
+          </div>
+        )}
 
         <div className="bg-black border border-pink-500/20 rounded-lg shadow-lg overflow-hidden">
           <div className="px-4 py-3 bg-black/60 border-b border-pink-500/20">
             <h3 className="font-['Noto_Serif_Display'] text-lg font-semibold text-pink-300">Available Dates ({availableDates.length})</h3>
-        </div>
-          
+          </div>
+
           <div className="table-fixed-height custom-scrollbar">
             <table className="min-w-full divide-y divide-pink-500/10 table-sticky-header table-zebra table-hover">
               <thead className="bg-black sticky top-0 z-10">
@@ -959,15 +970,15 @@ export default function AdminPanel() {
                   </tr>
                 ) : (
                   availableDates.map(date => (
-                    <motion.tr 
-                    key={date._id}
+                    <motion.tr
+                      key={date._id}
                       initial={{ opacity: 0, y: 10 }}
-                    animate={{ 
-                      opacity: deletingDateId === date._id ? 0.3 : 1,
+                      animate={{
+                        opacity: deletingDateId === date._id ? 0.3 : 1,
                         y: 0,
                         x: deletingDateId === date._id ? 50 : 0,
-                      backgroundColor: deletingDateId === date._id ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
-                    }}
+                        backgroundColor: deletingDateId === date._id ? 'rgba(239, 68, 68, 0.1)' : 'transparent'
+                      }}
                       transition={{ duration: 0.2 }}
                       className="hover:bg-pink-500/5"
                     >
@@ -977,26 +988,26 @@ export default function AdminPanel() {
                       <td className="py-3 px-3 text-center">
                         <span className={`inline-flex items-center justify-center w-16 rounded-full text-xs px-1.5 py-0.5 ${date.currentAppointments >= date.maxAppointments ? 'bg-red-900/30 text-red-300' : 'bg-green-900/30 text-green-300'}`}>
                           {date.currentAppointments} / {date.maxAppointments}
-                            </span>
+                        </span>
                       </td>
                       <td className="py-3 px-3 text-right">
-            <button
+                        <button
                           onClick={() => handleDeleteDate(date._id)}
-                        disabled={deletingDateId === date._id}
+                          disabled={deletingDateId === date._id}
                           className="p-1 text-red-300 hover:text-red-200 hover:bg-red-900/30 rounded disabled:opacity-50"
                           title="Delete Date"
                         >
                           <Trash2 size={16} />
-            </button>
+                        </button>
                       </td>
                     </motion.tr>
                   ))
                 )}
               </tbody>
             </table>
+          </div>
         </div>
       </div>
-            </div>
     );
   }
 
@@ -1004,17 +1015,17 @@ export default function AdminPanel() {
     return (
       <div>
         <h2 className="text-xl font-bold text-pink-300 mb-4">System Settings</h2>
-        
+
         <div className="bg-black border border-pink-500/20 rounded-lg shadow-lg p-4 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div>
+            <div>
               <h3 className="text-lg font-semibold mb-3 text-pink-200">Payment Settings</h3>
               <div className="space-y-4">
                 <div className="flex items-center">
-            <input
-              type="checkbox"
+                  <input
+                    type="checkbox"
                     id="paymentRequired"
-              checked={systemSettings.paymentRequired}
+                    checked={systemSettings.paymentRequired}
                     onChange={(e) => {
                       setSystemSettings({
                         ...systemSettings,
@@ -1026,18 +1037,18 @@ export default function AdminPanel() {
                   <label htmlFor="paymentRequired" className="ml-2 text-sm text-gray-300">
                     Require payment to book appointment
                   </label>
-        </div>
-        
+                </div>
+
                 <div>
                   <label htmlFor="defaultPrice" className="block text-sm font-medium text-gray-300 mb-1">
                     Default Deposit Amount (GHC)
                   </label>
-                <input
-                  type="number"
+                  <input
+                    type="number"
                     id="defaultPrice"
-                min="0"
+                    min="0"
                     step="1"
-                value={systemSettings.defaultPrice}
+                    value={systemSettings.defaultPrice}
                     onChange={(e) => {
                       setSystemSettings({
                         ...systemSettings,
@@ -1046,18 +1057,18 @@ export default function AdminPanel() {
                     }}
                     className="px-3 py-2 bg-black border border-pink-500/20 rounded-md w-32 text-sm"
                   />
-        </div>
-        
+                </div>
+
                 <div>
                   <label htmlFor="paymentTimeout" className="block text-sm font-medium text-gray-300 mb-1">
                     Payment Timeout (minutes)
                   </label>
-            <input
-              type="number"
+                  <input
+                    type="number"
                     id="paymentTimeout"
-                  min="1"
-              max="60"
-              value={systemSettings.paymentTimeoutMinutes}
+                    min="1"
+                    max="60"
+                    value={systemSettings.paymentTimeoutMinutes}
                     onChange={(e) => {
                       setSystemSettings({
                         ...systemSettings,
@@ -1068,15 +1079,15 @@ export default function AdminPanel() {
                   />
                 </div>
               </div>
-        </div>
-        
+            </div>
+
             <div>
               <h3 className="text-lg font-semibold mb-3 text-pink-200">Appointment Settings</h3>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="defaultStatus" className="block text-sm font-medium text-gray-300 mb-1">
                     Default Appointment Status
-            </label>
+                  </label>
                   <select
                     id="defaultStatus"
                     value={systemSettings.defaultAppointmentStatus}
@@ -1092,20 +1103,19 @@ export default function AdminPanel() {
                     <option value="confirmed">Confirmed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-          
+
           <div className="flex justify-end">
-              <button
+            <button
               onClick={updateSystemSettings}
               disabled={updatingSettings}
-              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
-                updatingSettings
-                  ? 'bg-pink-400 cursor-not-allowed'
-                  : 'bg-pink-500 hover:bg-pink-600'
-              } text-white transition-colors duration-200`}
+              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${updatingSettings
+                ? 'bg-pink-400 cursor-not-allowed'
+                : 'bg-pink-500 hover:bg-pink-600'
+                } text-white transition-colors duration-200`}
             >
               {updatingSettings ? (
                 <>
@@ -1120,7 +1130,7 @@ export default function AdminPanel() {
               )}
             </button>
           </div>
-          </div>
+        </div>
       </div>
     );
   };
@@ -1133,37 +1143,37 @@ export default function AdminPanel() {
           <div className="flex space-x-1 sm:space-x-2 overflow-x-auto hide-scrollbar">
             {renderTabs()}
           </div>
-                      </div>
-                      </div>
+        </div>
+      </div>
 
       {/* Main content area */}
       <div className="container mx-auto px-4 py-6">
         {/* Status Messages */}
         <AnimatePresence>
-        {error && (
-            <motion.div 
+          {error && (
+            <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className="mb-4 p-3 bg-red-500/20 border border-red-500/40 text-red-200 rounded-md"
             >
-            {error}
+              {error}
             </motion.div>
-      )}
+          )}
 
-        {success && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
               className="mb-4 p-3 bg-green-500/20 border border-green-500/40 text-green-200 rounded-md"
-          >
-            {success}
-          </motion.div>
-        )}
+            >
+              {success}
+            </motion.div>
+          )}
         </AnimatePresence>
 
-          {/* Tab content */}
+        {/* Tab content */}
         {loading ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-12">
             <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
@@ -1172,62 +1182,71 @@ export default function AdminPanel() {
         ) : (
           <>
             {/* Different content based on active tab */}
-          {activeTab === 'overview' && (
-                <div className="space-y-6">
-                  {/* Stats Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                    <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
-                      <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Today</div>
-                      <div className="text-xl font-bold">{categorizedAppointments.today.length}</div>
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
+                    <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Today</div>
+                    <div className="text-xl font-bold">{categorizedAppointments.today.length}</div>
+                  </div>
+                  <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
+                    <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Upcoming</div>
+                    <div className="text-xl font-bold">{categorizedAppointments.upcoming.length}</div>
+                  </div>
+                  <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
+                    <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Available Dates</div>
+                    <div className="text-xl font-bold">{availableDates.length}</div>
+                  </div>
+                  <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
+                    <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Total Clients</div>
+                    <div className="text-xl font-bold">{appointments.length}</div>
+                  </div>
                 </div>
-                    <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
-                      <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Upcoming</div>
-                      <div className="text-xl font-bold">{categorizedAppointments.upcoming.length}</div>
-                </div>
-                    <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
-                      <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Available Dates</div>
-                      <div className="text-xl font-bold">{availableDates.length}</div>
-                </div>
-                    <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-pink-500/20 p-4 hover:border-pink-500/40 transition-colors duration-200">
-                      <div className="font-['Noto_Serif_Display'] text-pink-300 text-sm mb-1">Total Clients</div>
-                      <div className="text-xl font-bold">{appointments.length}</div>
-                </div>
-              </div>
 
-                    {/* Appointment Tables */}
+                {/* Appointment Tables */}
+                {renderAppointmentTable(categorizedAppointments.today, "Today's")}
+                {renderAppointmentTable(categorizedAppointments.upcoming, "Upcoming")}
+              </div>
+            )}
+
+            {activeTab === 'appointments' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-gray-800 p-4">
+                  <div className="overflow-x-auto">
                     {renderAppointmentTable(categorizedAppointments.today, "Today's")}
-                    {renderAppointmentTable(categorizedAppointments.upcoming, "Upcoming")}
+                    {renderAppointmentTable(categorizedAppointments.upcoming, 'Upcoming')}
+                    {renderAppointmentTable(categorizedAppointments.past, 'Past')}
+                  </div>
                 </div>
-          )}
+              </motion.div>
+            )}
 
-          {activeTab === 'appointments' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
-            >
-              <div className="bg-black/40 backdrop-blur-sm rounded-lg border border-gray-800 p-4">
-                <div className="overflow-x-auto">
-                  {renderAppointmentTable(categorizedAppointments.today, "Today's")}
-                  {renderAppointmentTable(categorizedAppointments.upcoming, 'Upcoming')}
-                  {renderAppointmentTable(categorizedAppointments.past, 'Past')}
-                </div>
-              </div>
-            </motion.div>
-          )}
+            {activeTab === 'dates' && renderAvailableDatesTab()}
 
-          {activeTab === 'dates' && renderAvailableDatesTab()}
+            {activeTab === 'styles' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <HairStylesManager />
+              </motion.div>
+            )}
 
-          {activeTab === 'styles' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <HairStylesManager />
-            </motion.div>
-          )}
+            {activeTab === 'addons' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AddOnServicesManager />
+              </motion.div>
+            )}
 
-          {activeTab === 'settings' && renderSettingsTab()}
+            {activeTab === 'settings' && renderSettingsTab()}
           </>
         )}
       </div>
@@ -1263,7 +1282,7 @@ export default function AdminPanel() {
             formatServiceName={formatServiceName}
           />
         )}
-        
+
         {showPaymentHistory && (
           <PaymentHistoryModal
             appointment={selectedAppointment}

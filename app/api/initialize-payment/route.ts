@@ -15,15 +15,15 @@ function generateReference() {
 export async function POST(request: Request) {
   try {
     // Get payment details from request
-    const { 
-      email, 
-      amount, 
-      name, 
+    const {
+      email,
+      amount,
+      name,
       phone,
       serviceId,
-      metadata 
+      metadata
     } = await request.json();
-    
+
     // Validate required fields
     if (!email || !amount || !name || !phone || !serviceId || !metadata || !metadata.date) {
       return NextResponse.json(
@@ -31,32 +31,41 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     await connectDB();
-    
+
     // Generate a unique reference for this transaction
     const reference = generateReference();
-    
+
     // Get config settings from environment variables
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-    
+
     if (!paystackSecretKey) {
       return NextResponse.json(
         { error: 'Payment service is not properly configured' },
         { status: 500 }
       );
     }
-    
+
     // Verify service and date are valid
     try {
-      const service = await HairStyle.findOne({ value: serviceId });
+      // Search for service by value, name, or _id (to handle different input formats)
+      let service = await HairStyle.findOne({ value: serviceId });
       if (!service) {
+        service = await HairStyle.findOne({ name: serviceId });
+      }
+      if (!service && serviceId.match(/^[0-9a-fA-F]{24}$/)) {
+        service = await HairStyle.findById(serviceId);
+      }
+
+      if (!service) {
+        console.log('Service not found for serviceId:', serviceId);
         return NextResponse.json(
           { error: 'Invalid service selected' },
           { status: 400 }
         );
       }
-      
+
       // Check if date is available
       const selectedDate = new Date(metadata.date);
       const dateRecord = await AvailableDate.findOne({
@@ -65,14 +74,14 @@ export async function POST(request: Request) {
           $lt: new Date(selectedDate.setHours(23, 59, 59, 999))
         }
       });
-      
+
       if (!dateRecord) {
         return NextResponse.json(
           { error: 'Selected date is not available' },
           { status: 400 }
         );
       }
-      
+
       // Check if date is fully booked
       if (dateRecord.currentAppointments >= dateRecord.maxAppointments) {
         return NextResponse.json(
@@ -80,15 +89,15 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      
+
       // Create a pending appointment record before payment
       const appointmentData = {
         name: name,
         phone: phone,
         snapchat: metadata.snapchat || '',
         whatsapp: metadata.whatsapp,
-        service: serviceId,
-        serviceCategory: metadata.serviceCategory,
+        service: service.name, // Use the found service name, not the input serviceId
+        serviceCategory: metadata.serviceCategory || service.category,
         date: new Date(metadata.date),
         preferredLength: metadata.preferredLength,
         hairColor: metadata.hairColor || 'black',
@@ -98,12 +107,12 @@ export async function POST(request: Request) {
         status: 'pending',
         paystackReference: reference,
       };
-      
+
       console.log('Creating pending appointment with data:', JSON.stringify(appointmentData));
-      
+
       // Create the appointment document
       const appointment = new AppointmentModel(appointmentData);
-      
+
       try {
         // Save the appointment to the database
         await appointment.save();
@@ -115,7 +124,7 @@ export async function POST(request: Request) {
           { status: 500 }
         );
       }
-      
+
       // Initialize payment with Paystack
       const response = await fetch('https://api.paystack.co/transaction/initialize', {
         method: 'POST',
@@ -136,24 +145,24 @@ export async function POST(request: Request) {
           }
         })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Paystack initialization error:', errorData);
-        
+
         // Delete the pending appointment if payment initialization fails
         await AppointmentModel.findOneAndDelete({ paystackReference: reference });
-        
+
         return NextResponse.json(
           { error: 'Payment initialization failed', details: errorData.message || 'Error communicating with payment provider' },
           { status: 500 }
         );
       }
-      
+
       // Get and return Paystack response
       const data = await response.json();
       return NextResponse.json(data);
-      
+
     } catch (error) {
       console.error('Service/date verification error:', error);
       return NextResponse.json(
@@ -161,7 +170,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    
+
   } catch (error) {
     console.error('Payment initialization error:', error);
     return NextResponse.json(

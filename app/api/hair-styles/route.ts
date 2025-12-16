@@ -2,13 +2,19 @@ import { NextResponse } from 'next/server';
 import connectDB, { withCache } from '@/app/lib/mongodb';
 import HairStyle from '@/app/models/HairStyle';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const trending = searchParams.get('trending');
+
+    const cacheKey = trending === 'true' ? 'hair-styles-trending' : 'hair-styles';
+
     const hairStyles = await withCache(
-      'hair-styles',
+      cacheKey,
       async () => {
         await connectDB();
-        return HairStyle.find({}).sort({ category: 1, name: 1 }).lean();
+        const query = trending === 'true' ? { isTrending: true, isActive: true } : {};
+        return HairStyle.find(query).sort({ category: 1, name: 1 }).lean();
       },
       false
     );
@@ -36,11 +42,11 @@ export async function POST(request: Request) {
     }
 
     const hairStyle = await HairStyle.create(body);
-    
+
     // Properly refresh the cache with the latest hairstyles instead of just invalidating
     const allHairStyles = await HairStyle.find({}).sort({ category: 1, name: 1 }).lean();
     await withCache('hair-styles', async () => allHairStyles, true);
-    
+
     return NextResponse.json(hairStyle);
   } catch (error) {
     console.error('Error creating hair style:', error);
@@ -82,22 +88,22 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
+
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-    
+
     await connectDB();
     const hairStyle = await HairStyle.findByIdAndDelete(id);
-    
+
     if (!hairStyle) {
       return NextResponse.json({ error: 'Hair style not found' }, { status: 404 });
     }
-    
+
     // Properly refresh the cache with the latest hairstyles
     const allHairStyles = await HairStyle.find({}).sort({ category: 1, name: 1 }).lean();
     await withCache('hair-styles', async () => allHairStyles, true);
-    
+
     return NextResponse.json({ message: 'Hair style deleted successfully' });
   } catch (error) {
     console.error('Error deleting hair style:', error);
