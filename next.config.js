@@ -12,6 +12,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    // Disable optimization for external images to prevent timeout errors
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -35,6 +37,8 @@ const nextConfig = {
       },
     ],
     formats: ['image/webp'],
+    minimumCacheTTL: 60 * 60 * 24, // Cache images for 24 hours
+    deviceSizes: [640, 750, 828, 1080, 1200], // Optimize for common mobile sizes
   },
   // Production optimizations
   compiler: {
@@ -42,11 +46,11 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  
+
   webpack: (config, { isServer }) => {
     // Add alias for @ to resolve to root directory
     config.resolve.alias['@'] = path.resolve(__dirname);
-    
+
     return config;
   },
 }

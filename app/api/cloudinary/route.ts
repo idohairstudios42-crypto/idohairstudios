@@ -10,15 +10,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Image data is required' }, { status: 400 });
         }
 
+        console.log(`Starting image upload to folder: ${folder || 'general'}`);
         const result = await uploadImage(image, folder || 'general');
 
         return NextResponse.json({
             url: result.url,
             publicId: result.publicId
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Upload error:', error);
-        return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 });
+        // Pass through the specific error message
+        const errorMessage = error?.message || 'Failed to upload image';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 

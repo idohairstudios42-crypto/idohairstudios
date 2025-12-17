@@ -473,39 +473,6 @@ export default function Home() {
               </svg>
             </motion.div>
           )}
-
-          {/* Closing CTA + Book button */}
-          <motion.p
-            className="text-center text-sm text-white/80 mb-3 font-lato"
-            variants={itemVariants}
-          >
-            Book your appointment today and experience beauty that's engineered to last.
-          </motion.p>
-          {/* Book button - enhanced with subtle gradient border */}
-          <motion.button
-            onClick={() => setAcceptedTerms(true)}
-            className="w-full py-2.5 text-center border border-white/30 bg-white/10 hover:bg-white/20 uppercase tracking-widest mb-3 text-xs text-white hover:text-white transition-all duration-300 rounded-sm"
-            variants={itemVariants}
-            whileHover={{ scale: 1.01, boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)" }}
-            whileTap={{ scale: 0.99 }}
-          >
-            Book Your Appointment
-          </motion.button>
-
-          {/* Terms text - extra small as in image */}
-          <motion.p
-            className="text-[9px] text-center text-white/60 uppercase tracking-widest mb-8"
-            variants={itemVariants}
-          >
-            Please accept the terms and conditions below to confirm your appointment
-          </motion.p>
-
-          {/* Appointment form would appear when terms are accepted */}
-          {acceptedTerms && (
-            <div id="appointment-form" className="w-full max-w-2xl mx-auto scroll-mt-20">
-              <AppointmentForm />
-            </div>
-          )}
         </motion.section>
       </div>
 
