@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { Upload, X, Loader2, ZoomIn, ZoomOut, Move, Check, RotateCcw } from 'lucide-react';
+import { Upload, X, Loader2, ZoomIn, ZoomOut, Move, Check, RotateCcw, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ImageUploadProps {
@@ -12,7 +12,7 @@ interface ImageUploadProps {
     folder?: string;
     label?: string;
     className?: string;
-    aspectRatio?: '4/5' | '1/1' | '3/4'; // Card aspect ratios
+    aspectRatio?: '4/5' | '1/1' | '3/4';
 }
 
 interface CropState {
@@ -20,6 +20,10 @@ interface CropState {
     x: number;
     y: number;
 }
+
+// Cloudinary configuration from environment
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'hairengineer_unsigned';
 
 export default function ImageUpload({
     imageUrl,
@@ -31,12 +35,14 @@ export default function ImageUpload({
     aspectRatio = '4/5',
 }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [dragActive, setDragActive] = useState(false);
     const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [showCropper, setShowCropper] = useState(false);
     const [cropState, setCropState] = useState<CropState>({ scale: 1, x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [error, setError] = useState<string | null>(null);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const cropperRef = useRef<HTMLDivElement>(null);
@@ -99,12 +105,14 @@ export default function ImageUpload({
 
     // Handle file selection
     const handleFileSelect = (file: File) => {
+        setError(null);
+
         if (!file.type.startsWith('image/')) {
             toast.error('Please select an image file');
             return;
         }
 
-        if (file.size > 10 * 1024 * 1024) { // Increased to 10MB for high-res photos
+        if (file.size > 10 * 1024 * 1024) {
             toast.error('Image must be less than 10MB');
             return;
         }
@@ -118,11 +126,71 @@ export default function ImageUpload({
         reader.readAsDataURL(file);
     };
 
+    /**
+     * INDUSTRY STANDARD: Direct client-side upload to Cloudinary
+     * This bypasses the server completely, avoiding Vercel timeout limits
+     */
+    const uploadToCloudinary = async (blob: Blob): Promise<{ url: string; publicId: string }> => {
+        if (!CLOUD_NAME) {
+            throw new Error('Cloudinary cloud name not configured');
+        }
+
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', UPLOAD_PRESET);
+        formData.append('folder', `hairengineer/${folder}`);
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
+
+            // Track upload progress
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const progress = Math.round((e.loaded / e.total) * 100);
+                    setUploadProgress(progress);
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        resolve({
+                            url: response.secure_url,
+                            publicId: response.public_id
+                        });
+                    } catch {
+                        reject(new Error('Failed to parse response'));
+                    }
+                } else {
+                    try {
+                        const error = JSON.parse(xhr.responseText);
+                        reject(new Error(error.error?.message || 'Upload failed'));
+                    } catch {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                }
+            };
+
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.ontimeout = () => reject(new Error('Upload timed out'));
+
+            // 5 minute timeout for very slow connections
+            xhr.timeout = 300000;
+
+            xhr.send(formData);
+        });
+    };
+
     // Confirm and upload the cropped image
     const handleConfirmCrop = async () => {
         if (!selectedFile || !cropperRef.current) return;
 
         setUploading(true);
+        setUploadProgress(0);
+        setError(null);
 
         try {
             // Create a canvas to capture the cropped area
@@ -132,7 +200,7 @@ export default function ImageUpload({
 
             // Get the cropper dimensions
             const cropperRect = cropperRef.current.getBoundingClientRect();
-            const outputSize = 800; // Output image size
+            const outputSize = 800;
             canvas.width = outputSize;
             canvas.height = aspectRatio === '1/1' ? outputSize :
                 aspectRatio === '4/5' ? outputSize * 1.25 :
@@ -168,37 +236,36 @@ export default function ImageUpload({
                 canvas.height
             );
 
-            // Convert to base64
-            const croppedBase64 = canvas.toDataURL('image/jpeg', 0.9);
-
-            // Upload to Cloudinary
-            const response = await fetch('/api/cloudinary', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: croppedBase64, folder }),
+            // Convert canvas to blob for upload
+            const blob = await new Promise<Blob>((resolve, reject) => {
+                canvas.toBlob(
+                    (b) => b ? resolve(b) : reject(new Error('Failed to create blob')),
+                    'image/jpeg',
+                    0.9
+                );
             });
 
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Upload failed');
-            }
+            // Upload directly to Cloudinary (bypasses server - no timeout issues!)
+            const result = await uploadToCloudinary(blob);
 
-            const data = await response.json();
-            onUpload(data.url, data.publicId);
+            onUpload(result.url, result.publicId);
             toast.success('Image uploaded successfully');
             setShowCropper(false);
             setSelectedFile(null);
-        } catch (error: any) {
-            toast.error(error?.message || 'Failed to upload image');
+        } catch (err: any) {
+            console.error('Upload error:', err);
+            setError(err?.message || 'Failed to upload image');
+            toast.error(err?.message || 'Failed to upload image');
         } finally {
             setUploading(false);
+            setUploadProgress(0);
         }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) handleFileSelect(file);
-        e.target.value = ''; // Reset input
+        e.target.value = '';
     };
 
     const handleDrag = (e: React.DragEvent) => {
@@ -226,17 +293,8 @@ export default function ImageUpload({
     const cancelCrop = () => {
         setShowCropper(false);
         setSelectedFile(null);
+        setError(null);
         resetCrop();
-    };
-
-    // Get aspect ratio as number
-    const getAspectRatioValue = () => {
-        switch (aspectRatio) {
-            case '1/1': return 1;
-            case '3/4': return 3 / 4;
-            case '4/5': return 4 / 5;
-            default: return 4 / 5;
-        }
     };
 
     return (
@@ -254,6 +312,14 @@ export default function ImageUpload({
                                 <Move size={16} /> Drag to position • Pinch or use buttons to zoom
                             </p>
                         </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg flex items-center gap-2 text-red-300 text-sm">
+                                <AlertCircle size={18} />
+                                {error}
+                            </div>
+                        )}
 
                         {/* Cropper Area */}
                         <div
@@ -288,6 +354,20 @@ export default function ImageUpload({
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Upload Progress Overlay */}
+                            {uploading && (
+                                <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
+                                    <Loader2 className="w-10 h-10 text-white animate-spin mb-3" />
+                                    <div className="w-3/4 bg-gray-700 rounded-full h-2 mb-2">
+                                        <div
+                                            className="bg-white h-2 rounded-full transition-all duration-300"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-white text-sm">{uploadProgress}% uploaded</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Preview Card */}
@@ -318,21 +398,24 @@ export default function ImageUpload({
                         <div className="flex items-center justify-center gap-4 mt-6">
                             <button
                                 onClick={() => handleZoom('out')}
-                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                                disabled={uploading}
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition disabled:opacity-50"
                                 title="Zoom out"
                             >
                                 <ZoomOut size={20} />
                             </button>
                             <button
                                 onClick={resetCrop}
-                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                                disabled={uploading}
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition disabled:opacity-50"
                                 title="Reset"
                             >
                                 <RotateCcw size={20} />
                             </button>
                             <button
                                 onClick={() => handleZoom('in')}
-                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                                disabled={uploading}
+                                className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition disabled:opacity-50"
                                 title="Zoom in"
                             >
                                 <ZoomIn size={20} />
@@ -361,7 +444,7 @@ export default function ImageUpload({
                                 {uploading ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin" />
-                                        Uploading...
+                                        {uploadProgress}%
                                     </>
                                 ) : (
                                     <>
@@ -402,7 +485,6 @@ export default function ImageUpload({
                             </button>
                         )}
                     </div>
-                    {/* Replace button */}
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}

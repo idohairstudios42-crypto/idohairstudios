@@ -1137,8 +1137,8 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen w-full overflow-y-auto pb-20 hide-scrollbar">
-      {/* Top navigation bar with tabs and logout button */}
-      <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-md border-b border-pink-500/20 px-4 sm:px-6 py-3">
+      {/* Top navigation bar with tabs and logout button - scrolls with content */}
+      <div className="bg-black/70 backdrop-blur-md border-b border-pink-500/20 px-4 sm:px-6 py-3">
         <div className="flex justify-between items-center">
           <div className="flex space-x-1 sm:space-x-2 overflow-x-auto hide-scrollbar">
             {renderTabs()}
@@ -1146,8 +1146,8 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="container mx-auto px-4 py-6">
+      {/* Main content area - full width */}
+      <div className="w-full px-4 sm:px-6 py-4">
         {/* Status Messages */}
         <AnimatePresence>
           {error && (
