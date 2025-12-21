@@ -102,12 +102,16 @@ export async function POST(request: Request) {
         time: metadata.time,
         preferredLength: metadata.preferredLength,
         hairColor: metadata.hairColor || 'black',
-        totalAmount: amount,
+        // Use full totalAmount from metadata (not deposit amount)
+        totalAmount: metadata.totalAmount || amount,
         amountPaid: 0,
         paymentStatus: 'unpaid',
         status: 'pending',
         paystackReference: reference,
         addOns: metadata.addOns || [],
+        // Store selected variation and deposit info
+        selectedVariation: metadata.selectedVariation || null,
+        depositPercentage: metadata.depositPercentage || null,
       };
 
       console.log('Creating pending appointment with data:', JSON.stringify(appointmentData));

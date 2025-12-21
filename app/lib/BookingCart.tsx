@@ -7,6 +7,7 @@ export interface SelectedStyle {
     name: string;
     category: string;
     price: number;
+    variationName?: string;  // Selected variation name e.g. "Midback", "Large Waist | 4 Rows"
     imageUrl?: string;
 }
 

@@ -28,6 +28,8 @@ interface Appointment {
     name: string
     price: number
   }>
+  selectedVariation?: string  // e.g. "Midback"
+  depositPercentage?: number
   createdAt?: string
   updatedAt?: string
 }
@@ -88,6 +90,11 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
               <div>
                 <span className="text-gray-400 text-xs block">Service</span>
                 <span className="text-white font-medium">{formatServiceName(appointment.service)}</span>
+                {appointment.selectedVariation && (
+                  <span className="text-gray-400 text-sm block mt-0.5">
+                    Variation: {appointment.selectedVariation}
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -105,10 +112,10 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
               <div>
                 <span className="text-gray-400 text-xs block">Status</span>
                 <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${appointment.status === 'confirmed'
-                    ? 'bg-green-500/20 text-green-300'
-                    : appointment.status === 'pending'
-                      ? 'bg-yellow-500/20 text-yellow-300'
-                      : 'bg-red-500/20 text-red-300'
+                  ? 'bg-green-500/20 text-green-300'
+                  : appointment.status === 'pending'
+                    ? 'bg-yellow-500/20 text-yellow-300'
+                    : 'bg-red-500/20 text-red-300'
                   }`}>
                   {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                 </span>
@@ -150,21 +157,27 @@ export default function ClientDetailsModal({ appointment, isOpen, onClose, forma
               <div>
                 <span className="text-gray-400 text-xs block">Balance</span>
                 <span className={`font-medium ${appointment.paymentStatus === 'full'
-                    ? 'text-green-400'
-                    : appointment.paymentStatus === 'partial'
-                      ? 'text-yellow-400'
-                      : 'text-red-400'
+                  ? 'text-green-400'
+                  : appointment.paymentStatus === 'partial'
+                    ? 'text-yellow-400'
+                    : 'text-red-400'
                   }`}>
                   GHS {formatAmount((appointment.totalAmount || 0) - (appointment.amountPaid || 0))}
                 </span>
               </div>
+              {appointment.depositPercentage && (
+                <div>
+                  <span className="text-gray-400 text-xs block">Deposit Rate</span>
+                  <span className="text-white">{appointment.depositPercentage}%</span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-400 text-xs block">Payment Status</span>
                 <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${appointment.paymentStatus === 'full'
-                    ? 'bg-green-500/20 text-green-300'
-                    : appointment.paymentStatus === 'partial'
-                      ? 'bg-yellow-500/20 text-yellow-300'
-                      : 'bg-red-500/20 text-red-300'
+                  ? 'bg-green-500/20 text-green-300'
+                  : appointment.paymentStatus === 'partial'
+                    ? 'bg-yellow-500/20 text-yellow-300'
+                    : 'bg-red-500/20 text-red-300'
                   }`}>
                   {appointment.paymentStatus === 'full'
                     ? 'Paid'

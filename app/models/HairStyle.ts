@@ -19,6 +19,15 @@ const HairStyleSchema = new mongoose.Schema({
     required: false,
     default: 0,
   },
+  // Price variations for styles with size/length options
+  priceVariations: [{
+    name: { type: String, required: true },  // e.g. "Shoulder", "Midback", "Waist"
+    price: { type: Number, required: true }, // e.g. 459, 559, 659
+  }],
+  variationLabel: {
+    type: String,
+    default: 'Select Length',  // e.g. "Select Length", "Select Hair and workmanship"
+  },
   description: {
     type: String,
     default: '',

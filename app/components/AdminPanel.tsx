@@ -85,7 +85,8 @@ export default function AdminPanel() {
     paymentRequired: true,
     paymentTimeoutMinutes: 10,
     defaultAppointmentStatus: 'pending',
-    defaultPrice: 2
+    defaultPrice: 2,
+    depositPercentage: 22
   });
   const [updatingSettings, setUpdatingSettings] = useState(false);
   const [categorizedAppointments, setCategorizedAppointments] = useState<{
@@ -233,7 +234,8 @@ export default function AdminPanel() {
           paymentRequired: data.paymentRequired ?? true,
           paymentTimeoutMinutes: data.paymentTimeoutMinutes ?? 10,
           defaultAppointmentStatus: data.defaultAppointmentStatus ?? 'pending',
-          defaultPrice: data.defaultPrice ?? 2
+          defaultPrice: data.defaultPrice ?? 2,
+          depositPercentage: data.depositPercentage ?? 22
         });
       }
     } catch (error) {
@@ -253,7 +255,8 @@ export default function AdminPanel() {
         paymentRequired: systemSettings.paymentRequired,
         paymentTimeoutMinutes: systemSettings.paymentTimeoutMinutes,
         defaultAppointmentStatus: systemSettings.defaultAppointmentStatus,
-        defaultPrice: systemSettings.defaultPrice
+        defaultPrice: systemSettings.defaultPrice,
+        depositPercentage: systemSettings.depositPercentage
       };
 
       const response = await fetch('/api/system-settings', {
@@ -525,6 +528,16 @@ export default function AdminPanel() {
                         <span className="text-xs text-gray-400 truncate max-w-[120px] sm:max-w-[150px]">
                           {appointment.phone}
                         </span>
+                        {/* Mobile-only: Show service and payment status */}
+                        <div className="sm:hidden mt-1 flex flex-col gap-0.5">
+                          <span className="text-xs text-gray-500 truncate max-w-[140px]">
+                            {formatServiceName(appointment.service)}
+                          </span>
+                          <span className={`text-xs ${getPaymentStatusColor(appointment.paymentStatus)}`}>
+                            {getPaymentStatusText(appointment.paymentStatus)}
+                            {appointment.paymentStatus === 'partial' && ` • ${formatAmount(appointment.amountPaid)}/${formatAmount(appointment.totalAmount)}`}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="py-2 px-3 hidden sm:table-cell">
@@ -1057,6 +1070,31 @@ export default function AdminPanel() {
                     }}
                     className="px-3 py-2 bg-black border border-pink-500/20 rounded-md w-32 text-sm"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="depositPercentage" className="block text-sm font-medium text-gray-300 mb-1">
+                    Deposit Percentage (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      id="depositPercentage"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={systemSettings.depositPercentage}
+                      onChange={(e) => {
+                        setSystemSettings({
+                          ...systemSettings,
+                          depositPercentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0))
+                        });
+                      }}
+                      className="px-3 py-2 bg-black border border-pink-500/20 rounded-md w-24 text-sm"
+                    />
+                    <span className="text-gray-400 text-sm">%</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Customers pay this percentage upfront during booking</p>
                 </div>
 
                 <div>

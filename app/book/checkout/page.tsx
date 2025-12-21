@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, CreditCard, User, Phone, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Check, CreditCard, User, Phone, MessageCircle, Info } from 'lucide-react';
 import { useBookingCart } from '@/app/lib/BookingCart';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 
 export default function CheckoutPage() {
     const [loading, setLoading] = useState(false);
+    const [depositPercentage, setDepositPercentage] = useState(22); // Default 22%
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -34,11 +35,37 @@ export default function CheckoutPage() {
         clearCart
     } = useBookingCart();
 
+    // Calculate deposit amount
+    const getDepositAmount = () => {
+        return Math.round(getTotal() * (depositPercentage / 100));
+    };
+
+    // Calculate balance due
+    const getBalanceDue = () => {
+        return getTotal() - getDepositAmount();
+    };
+
     useEffect(() => {
         if (!selectedStyle || !selectedDate || !selectedTime) {
             router.push('/book');
             return;
         }
+
+        // Fetch system settings for deposit percentage
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('/api/system-settings');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.depositPercentage !== undefined) {
+                        setDepositPercentage(data.depositPercentage);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch system settings:', error);
+            }
+        };
+        fetchSettings();
 
         // Load Paystack script
         if (!paystackScriptLoaded.current) {
@@ -108,13 +135,14 @@ export default function CheckoutPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: `${formData.phone.replace(/\D/g, '')}@bookings.idohairstudios.com`,
-                    amount: getTotal(),
+                    amount: getDepositAmount(), // Charge deposit only, not full total
                     name: formData.name,
                     phone: formData.phone,
                     serviceId: selectedStyle?.name,
                     metadata: {
                         service: selectedStyle?.name,
                         serviceCategory: selectedStyle?.category,
+                        selectedVariation: selectedStyle?.variationName,
                         date: selectedDate?.toISOString(),
                         time: selectedTime,
                         preferredLength: formData.preferredLength,
@@ -122,7 +150,10 @@ export default function CheckoutPage() {
                         whatsapp: formData.whatsapp,
                         hairColor: formData.hairColor,
                         currency: 'GHS',
-                        price: getTotal(),
+                        totalAmount: getTotal(),
+                        depositAmount: getDepositAmount(),
+                        depositPercentage: depositPercentage,
+                        balanceDue: getBalanceDue(),
                         addOns: selectedAddOns.map(a => ({ name: a.name, price: a.price }))
                     }
                 })
@@ -269,7 +300,7 @@ export default function CheckoutPage() {
                             </div>
                         </div>
 
-                        {/* Total */}
+                        {/* Total & Deposit Breakdown */}
                         <div className="pt-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-400">Subtotal</span>
@@ -281,9 +312,27 @@ export default function CheckoutPage() {
                                     <span className="text-gray-300">{formatPrice(getAddOnsTotal())}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-800">
-                                <span className="text-xl font-bold text-white">Total</span>
-                                <span className="text-2xl font-bold text-white">{formatPrice(getTotal())}</span>
+                            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-800">
+                                <span className="text-gray-400">Total Service Cost</span>
+                                <span className="text-gray-300">{formatPrice(getTotal())}</span>
+                            </div>
+
+                            {/* Deposit Highlight */}
+                            <div className="mt-4 p-3 bg-gradient-to-r from-white/5 to-white/10 rounded-lg border border-white/20">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-bold text-white">Deposit Due Today</span>
+                                        <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">{depositPercentage}%</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-white">{formatPrice(getDepositAmount())}</span>
+                                </div>
+                                <div className="flex justify-between items-center mt-2 text-sm">
+                                    <span className="text-gray-400 flex items-center gap-1">
+                                        <Info size={12} />
+                                        Balance due at appointment
+                                    </span>
+                                    <span className="text-gray-400">{formatPrice(getBalanceDue())}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -402,7 +451,7 @@ export default function CheckoutPage() {
                             ) : (
                                 <>
                                     <CreditCard size={20} />
-                                    Pay {formatPrice(getTotal())}
+                                    Pay Deposit {formatPrice(getDepositAmount())}
                                 </>
                             )}
                         </button>

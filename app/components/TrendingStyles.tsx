@@ -7,12 +7,19 @@ import { motion } from 'framer-motion';
 import { Flame, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBookingCart } from '@/app/lib/BookingCart';
 
+interface PriceVariation {
+    name: string;
+    price: number;
+}
+
 interface HairStyle {
     _id: string;
     category: string;
     name: string;
     value: string;
     price: number;
+    priceVariations?: PriceVariation[];
+    variationLabel?: string;
     description: string;
     imageUrl: string;
     isTrending: boolean;
@@ -48,6 +55,13 @@ export default function TrendingStyles() {
     };
 
     const handleStyleClick = (style: HairStyle) => {
+        // If style has variations, redirect to category page where StyleDetailModal will open
+        if (hasVariations(style)) {
+            router.push(`/book/${encodeURIComponent(style.category)}`);
+            return;
+        }
+
+        // For single-price styles, go directly to addons
         setSelectedStyle({
             _id: style._id,
             name: style.name,
@@ -60,6 +74,19 @@ export default function TrendingStyles() {
 
     const formatPrice = (price: number) => {
         return `GH₵${(price || 0).toLocaleString()}`;
+    };
+
+    // Get display price (minimum of variations or single price)
+    const getDisplayPrice = (style: HairStyle) => {
+        if (style.priceVariations && style.priceVariations.length > 0) {
+            return Math.min(...style.priceVariations.map(v => v.price));
+        }
+        return style.price || 0;
+    };
+
+    // Check if style has variations
+    const hasVariations = (style: HairStyle) => {
+        return style.priceVariations && style.priceVariations.length > 0;
     };
 
     const scroll = (direction: 'left' | 'right') => {
@@ -191,7 +218,8 @@ export default function TrendingStyles() {
                                         </h3>
                                         <div className="flex items-center justify-between text-sm mb-3">
                                             <span className="text-white font-medium text-lg">
-                                                {formatPrice(style.price)}
+                                                {hasVariations(style) && <span className="text-sm font-normal text-white/70">From </span>}
+                                                {formatPrice(getDisplayPrice(style))}
                                             </span>
                                             {style.duration && (
                                                 <span className="flex items-center gap-1 text-white/80 text-sm">
@@ -244,8 +272,8 @@ export default function TrendingStyles() {
                             }
                         }}
                         className={`transition-all duration-300 ${index === currentIndex
-                                ? 'w-6 h-2 bg-white rounded-full'
-                                : 'w-2 h-2 bg-white/40 rounded-full hover:bg-white/60'
+                            ? 'w-6 h-2 bg-white rounded-full'
+                            : 'w-2 h-2 bg-white/40 rounded-full hover:bg-white/60'
                             }`}
                         aria-label={`Go to style ${index + 1}`}
                     />

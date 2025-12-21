@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ export default function SchedulePage() {
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
     const router = useRouter();
     const { selectedStyle, selectedDate, selectedTime, setSelectedDate, setSelectedTime, getTotal } = useBookingCart();
+    const timeSectionRef = useRef<HTMLDivElement>(null);
 
     const timeSlots = [
         '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM',
@@ -76,6 +77,14 @@ export default function SchedulePage() {
     const handleDateSelect = (date: Date) => {
         setSelectedDate(date);
         setSelectedTime(null);
+
+        // Auto-scroll to time section on mobile after a short delay
+        setTimeout(() => {
+            timeSectionRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 300);
     };
 
     const handleTimeSelect = (time: string) => {
@@ -207,6 +216,7 @@ export default function SchedulePage() {
             {/* Time Selection */}
             {selectedDate && (
                 <motion.div
+                    ref={timeSectionRef}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mb-8"

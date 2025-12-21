@@ -3,12 +3,19 @@ import { Plus, Edit, Trash2, Check, X, Sparkles, RefreshCw, Layers, PlusCircle, 
 import { motion } from 'framer-motion'
 import ImageUpload from './ImageUpload'
 
+interface PriceVariation {
+  name: string
+  price: number
+}
+
 interface HairStyle {
   _id: string
   category: string
   name: string
   value: string
   price: number
+  priceVariations?: PriceVariation[]
+  variationLabel?: string
   description: string
   imageUrl: string
   imagePublicId: string
@@ -43,6 +50,8 @@ export default function HairStylesManager() {
     name: '',
     value: '',
     price: 0,
+    priceVariations: [] as PriceVariation[],
+    variationLabel: 'Select Length',
     description: '',
     imageUrl: '',
     imagePublicId: '',
@@ -51,6 +60,10 @@ export default function HairStylesManager() {
     imagePosition: 'top' as 'top' | 'center' | 'bottom',
     isActive: true
   })
+
+  // State for variations UI mode
+  const [useVariations, setUseVariations] = useState(false)
+  const [editUseVariations, setEditUseVariations] = useState(false)
 
   const [editingStyle, setEditingStyle] = useState<HairStyle | null>(null)
   const [seedingStatus, setSeedingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -72,6 +85,9 @@ export default function HairStylesManager() {
 
   // Add a state variable to track which category is being deleted
   const [deletingCategory, setDeletingCategory] = useState<string | null>(null)
+
+  // Style search state
+  const [styleSearchQuery, setStyleSearchQuery] = useState('')
 
   // Get categories for dropdown - ensure categories is an array before filtering
   const categoryOptions = Array.isArray(categories)
@@ -418,6 +434,8 @@ export default function HairStylesManager() {
         name: '',
         value: '',
         price: 0,
+        priceVariations: [],
+        variationLabel: 'Select Length',
         description: '',
         imageUrl: '',
         imagePublicId: '',
@@ -426,6 +444,7 @@ export default function HairStylesManager() {
         imagePosition: 'top',
         isActive: true
       })
+      setUseVariations(false)
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)
@@ -593,16 +612,26 @@ export default function HairStylesManager() {
     }
   };
 
-  // Ensure hairStyles is an array before using reduce
-  const groupedStyles = Array.isArray(hairStyles)
-    ? hairStyles.reduce((acc, style) => {
-      if (!acc[style.category]) {
-        acc[style.category] = []
-      }
-      acc[style.category].push(style)
-      return acc
-    }, {} as Record<string, HairStyle[]>)
-    : {} as Record<string, HairStyle[]>
+  // Ensure hairStyles is an array before using reduce, and filter by search query
+  const filteredStyles = Array.isArray(hairStyles)
+    ? hairStyles.filter(style => {
+      if (!styleSearchQuery.trim()) return true;
+      const query = styleSearchQuery.toLowerCase();
+      return (
+        style.name.toLowerCase().includes(query) ||
+        style.category.toLowerCase().includes(query) ||
+        style.value.toLowerCase().includes(query)
+      );
+    })
+    : [];
+
+  const groupedStyles = filteredStyles.reduce((acc, style) => {
+    if (!acc[style.category]) {
+      acc[style.category] = []
+    }
+    acc[style.category].push(style)
+    return acc
+  }, {} as Record<string, HairStyle[]>)
 
   // Add this new component inside the HairStylesManager function
   const CategoryManager = () => {
@@ -1054,18 +1083,136 @@ export default function HairStylesManager() {
                     />
                   </div>
 
-                  <div>
-                    <label className="lash-label">Price (GH₵)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      name="price"
-                      value={editingStyle.price || 0}
-                      onChange={(e) => setEditingStyle({ ...editingStyle, price: parseFloat(e.target.value) || 0 })}
-                      className="hair-style-input"
-                      placeholder="e.g. 880"
-                    />
+                  {/* Pricing Section with Toggle */}
+                  <div className="md:col-span-2 bg-black/30 rounded-lg p-4 border border-gray-800">
+                    <label className="lash-label mb-3 block">Pricing</label>
+
+                    {/* Toggle: Single Price vs Multiple Variations */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="pricingMode"
+                          checked={!editUseVariations}
+                          onChange={() => {
+                            setEditUseVariations(false)
+                            if (editingStyle) {
+                              setEditingStyle({ ...editingStyle, priceVariations: [] })
+                            }
+                          }}
+                          className="mr-2 text-pink-500"
+                        />
+                        <span className="text-gray-300 text-sm">Single Price</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="pricingMode"
+                          checked={editUseVariations}
+                          onChange={() => {
+                            setEditUseVariations(true)
+                            if (editingStyle) {
+                              setEditingStyle({ ...editingStyle, price: 0 })
+                            }
+                          }}
+                          className="mr-2 text-pink-500"
+                        />
+                        <span className="text-gray-300 text-sm">Multiple Variations</span>
+                      </label>
+                    </div>
+
+                    {!editUseVariations ? (
+                      /* Single Price Input */
+                      <div>
+                        <label className="lash-label">Price (GH₵)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          name="price"
+                          value={editingStyle.price || 0}
+                          onChange={(e) => setEditingStyle({ ...editingStyle, price: parseFloat(e.target.value) || 0 })}
+                          className="hair-style-input"
+                          placeholder="e.g. 880"
+                        />
+                      </div>
+                    ) : (
+                      /* Multiple Variations Editor */
+                      <div className="space-y-4">
+                        {/* Variation Label Dropdown */}
+                        <div>
+                          <label className="lash-label">Variation Label</label>
+                          <select
+                            value={editingStyle.variationLabel || 'Select Length'}
+                            onChange={(e) => setEditingStyle({ ...editingStyle, variationLabel: e.target.value })}
+                            className="hair-style-input"
+                          >
+                            <option value="Select Length">Select Length</option>
+                            <option value="Select Length & Rows">Select Length & Rows</option>
+                            <option value="Select Hair and workmanship">Select Hair and workmanship</option>
+                            <option value="Select Size">Select Size</option>
+                            <option value="Select Style Option">Select Style Option</option>
+                          </select>
+                        </div>
+
+                        {/* Variations List */}
+                        <div className="space-y-2">
+                          <label className="lash-label">Variations</label>
+                          {(editingStyle.priceVariations || []).map((variation, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={variation.name}
+                                onChange={(e) => {
+                                  const updatedVariations = [...(editingStyle.priceVariations || [])]
+                                  updatedVariations[index] = { ...variation, name: e.target.value }
+                                  setEditingStyle({ ...editingStyle, priceVariations: updatedVariations })
+                                }}
+                                className="hair-style-input flex-1"
+                                placeholder="e.g. Shoulder, Midback, Waist"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={variation.price}
+                                onChange={(e) => {
+                                  const updatedVariations = [...(editingStyle.priceVariations || [])]
+                                  updatedVariations[index] = { ...variation, price: parseFloat(e.target.value) || 0 }
+                                  setEditingStyle({ ...editingStyle, priceVariations: updatedVariations })
+                                }}
+                                className="hair-style-input w-24"
+                                placeholder="Price"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedVariations = (editingStyle.priceVariations || []).filter((_, i) => i !== index)
+                                  setEditingStyle({ ...editingStyle, priceVariations: updatedVariations })
+                                }}
+                                className="p-2 text-red-400 hover:bg-red-500/10 rounded"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newVariation = { name: '', price: 0 }
+                              setEditingStyle({
+                                ...editingStyle,
+                                priceVariations: [...(editingStyle.priceVariations || []), newVariation]
+                              })
+                            }}
+                            className="flex items-center gap-1 text-sm text-pink-400 hover:text-pink-300 mt-2"
+                          >
+                            <Plus size={16} />
+                            Add Variation
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1212,18 +1359,132 @@ export default function HairStylesManager() {
                     />
                   </div>
 
-                  <div>
-                    <label className="lash-label">Price (GH₵)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      name="price"
-                      value={newStyle.price}
-                      onChange={(e) => setNewStyle({ ...newStyle, price: parseFloat(e.target.value) || 0 })}
-                      className="hair-style-input"
-                      placeholder="e.g. 880"
-                    />
+                  {/* Pricing Section with Toggle */}
+                  <div className="md:col-span-2 bg-black/30 rounded-lg p-4 border border-gray-800">
+                    <label className="lash-label mb-3 block">Pricing</label>
+
+                    {/* Toggle: Single Price vs Multiple Variations */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="newPricingMode"
+                          checked={!useVariations}
+                          onChange={() => {
+                            setUseVariations(false)
+                            setNewStyle({ ...newStyle, priceVariations: [] })
+                          }}
+                          className="mr-2 text-pink-500"
+                        />
+                        <span className="text-gray-300 text-sm">Single Price</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="newPricingMode"
+                          checked={useVariations}
+                          onChange={() => {
+                            setUseVariations(true)
+                            setNewStyle({ ...newStyle, price: 0 })
+                          }}
+                          className="mr-2 text-pink-500"
+                        />
+                        <span className="text-gray-300 text-sm">Multiple Variations</span>
+                      </label>
+                    </div>
+
+                    {!useVariations ? (
+                      /* Single Price Input */
+                      <div>
+                        <label className="lash-label">Price (GH₵)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          name="price"
+                          value={newStyle.price}
+                          onChange={(e) => setNewStyle({ ...newStyle, price: parseFloat(e.target.value) || 0 })}
+                          className="hair-style-input"
+                          placeholder="e.g. 880"
+                        />
+                      </div>
+                    ) : (
+                      /* Multiple Variations Editor */
+                      <div className="space-y-4">
+                        {/* Variation Label Dropdown */}
+                        <div>
+                          <label className="lash-label">Variation Label</label>
+                          <select
+                            value={newStyle.variationLabel || 'Select Length'}
+                            onChange={(e) => setNewStyle({ ...newStyle, variationLabel: e.target.value })}
+                            className="hair-style-input"
+                          >
+                            <option value="Select Length">Select Length</option>
+                            <option value="Select Length & Rows">Select Length & Rows</option>
+                            <option value="Select Hair and workmanship">Select Hair and workmanship</option>
+                            <option value="Select Size">Select Size</option>
+                            <option value="Select Style Option">Select Style Option</option>
+                          </select>
+                        </div>
+
+                        {/* Variations List */}
+                        <div className="space-y-2">
+                          <label className="lash-label">Variations</label>
+                          {newStyle.priceVariations.map((variation, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={variation.name}
+                                onChange={(e) => {
+                                  const updatedVariations = [...newStyle.priceVariations]
+                                  updatedVariations[index] = { ...variation, name: e.target.value }
+                                  setNewStyle({ ...newStyle, priceVariations: updatedVariations })
+                                }}
+                                className="hair-style-input flex-1"
+                                placeholder="e.g. Shoulder, Midback, Waist"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={variation.price}
+                                onChange={(e) => {
+                                  const updatedVariations = [...newStyle.priceVariations]
+                                  updatedVariations[index] = { ...variation, price: parseFloat(e.target.value) || 0 }
+                                  setNewStyle({ ...newStyle, priceVariations: updatedVariations })
+                                }}
+                                className="hair-style-input w-24"
+                                placeholder="Price"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedVariations = newStyle.priceVariations.filter((_, i) => i !== index)
+                                  setNewStyle({ ...newStyle, priceVariations: updatedVariations })
+                                }}
+                                className="p-2 text-red-400 hover:bg-red-500/10 rounded"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newVariation = { name: '', price: 0 }
+                              setNewStyle({
+                                ...newStyle,
+                                priceVariations: [...newStyle.priceVariations, newVariation]
+                              })
+                            }}
+                            className="flex items-center gap-1 text-sm text-pink-400 hover:text-pink-300 mt-2"
+                          >
+                            <Plus size={16} />
+                            Add Variation
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1314,8 +1575,41 @@ export default function HairStylesManager() {
           <div className="space-y-4">
             {loading && !showCategoryManager && <p className="text-center text-gray-400 text-sm py-4">Loading...</p>}
 
-            {!loading && Object.keys(groupedStyles).length === 0 && !showCategoryManager && (
+            {!loading && Object.keys(groupedStyles).length === 0 && !showCategoryManager && !styleSearchQuery && (
               <p className="text-center text-gray-400 text-sm py-4">No hair styles found. Add your first style above.</p>
+            )}
+
+            {!loading && styleSearchQuery && Object.keys(groupedStyles).length === 0 && !showCategoryManager && (
+              <p className="text-center text-gray-400 text-sm py-4">No styles match "{styleSearchQuery}". Try a different search.</p>
+            )}
+
+            {/* Search Bar */}
+            {!showCategoryManager && hairStyles.length > 0 && (
+              <div className="flex items-center gap-3 mb-4">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search styles by name, category..."
+                    value={styleSearchQuery}
+                    onChange={(e) => setStyleSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 pl-10 bg-black border border-gray-700 rounded-lg text-white text-sm focus:border-pink-500/50 focus:outline-none"
+                  />
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  {styleSearchQuery && (
+                    <button
+                      onClick={() => setStyleSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <span className="text-gray-500 text-sm whitespace-nowrap">
+                  {filteredStyles.length} of {hairStyles.length}
+                </span>
+              </div>
             )}
 
             {!showCategoryManager && (
@@ -1373,7 +1667,16 @@ export default function HairStylesManager() {
                                     {style.isActive ? <Check size={18} /> : <X size={18} />}
                                   </button>
                                   <button
-                                    onClick={() => setEditingStyle(style)}
+                                    onClick={() => {
+                                      // Initialize priceVariations and variationLabel if missing from DB
+                                      const styleWithDefaults = {
+                                        ...style,
+                                        priceVariations: style.priceVariations || [],
+                                        variationLabel: style.variationLabel || 'Select Length'
+                                      }
+                                      setEditingStyle(styleWithDefaults)
+                                      setEditUseVariations(styleWithDefaults.priceVariations.length > 0)
+                                    }}
                                     className="p-1 rounded-full text-blue-400 hover:bg-blue-500/10"
                                     title="Edit"
                                     disabled={deletingStyle === style._id}
@@ -1444,7 +1747,16 @@ export default function HairStylesManager() {
                                 {style.isActive ? <Check size={16} /> : <X size={16} />}
                               </button>
                               <button
-                                onClick={() => setEditingStyle(style)}
+                                onClick={() => {
+                                  // Initialize priceVariations and variationLabel if missing from DB
+                                  const styleWithDefaults = {
+                                    ...style,
+                                    priceVariations: style.priceVariations || [],
+                                    variationLabel: style.variationLabel || 'Select Length'
+                                  }
+                                  setEditingStyle(styleWithDefaults)
+                                  setEditUseVariations(styleWithDefaults.priceVariations.length > 0)
+                                }}
                                 className="p-1.5 rounded-full text-blue-400 bg-blue-500/10"
                                 title="Edit"
                                 disabled={deletingStyle === style._id}

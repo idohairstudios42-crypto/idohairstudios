@@ -36,6 +36,14 @@ const AppointmentSchema = new mongoose.Schema({
     price: { type: Number },
     _id: { type: String }
   }],
+  selectedVariation: {
+    type: String,
+    required: false,  // e.g. "Midback", "Large Waist | 4 Rows"
+  },
+  depositPercentage: {
+    type: Number,
+    required: false,  // Stores the deposit rate at time of booking
+  },
   hairColor: {
     type: String,
     required: true,

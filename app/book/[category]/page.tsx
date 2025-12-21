@@ -5,8 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, X, Search } from 'lucide-react';
 import { useBookingCart } from '@/app/lib/BookingCart';
+import StyleDetailModal from '@/app/components/StyleDetailModal';
+
+interface PriceVariation {
+    name: string;
+    price: number;
+}
 
 interface HairStyle {
     _id: string;
@@ -14,6 +20,8 @@ interface HairStyle {
     name: string;
     value: string;
     price: number;
+    priceVariations?: PriceVariation[];
+    variationLabel?: string;
     description: string;
     imageUrl: string;
     isTrending: boolean;
@@ -26,9 +34,12 @@ export default function CategoryStylesPage() {
     const [styles, setStyles] = useState<HairStyle[]>([]);
     const [loading, setLoading] = useState(true);
     const [categoryName, setCategoryName] = useState('');
+    const [selectedStyleForModal, setSelectedStyleForModal] = useState<HairStyle | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const router = useRouter();
     const params = useParams();
     const { setSelectedStyle } = useBookingCart();
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (params.category) {
@@ -55,14 +66,23 @@ export default function CategoryStylesPage() {
         }
     };
 
-    const handleSelectStyle = (style: HairStyle) => {
+    // Open modal when a style is clicked
+    const handleStyleClick = (style: HairStyle) => {
+        setSelectedStyleForModal(style);
+        setIsModalOpen(true);
+    };
+
+    // Handle selection from modal (with or without variation)
+    const handleModalSelect = (style: HairStyle, selectedVariation: { name: string; price: number } | null) => {
         setSelectedStyle({
             _id: style._id,
             name: style.name,
             category: style.category,
-            price: style.price || 0,
+            price: selectedVariation ? selectedVariation.price : style.price || 0,
+            variationName: selectedVariation?.name,
             imageUrl: style.imageUrl,
         });
+        setIsModalOpen(false);
         router.push('/book/addons');
     };
 
@@ -70,8 +90,31 @@ export default function CategoryStylesPage() {
         return `GH₵${price.toLocaleString('en-GH', { minimumFractionDigits: 0 })}`;
     };
 
-    const trendingStyles = styles.filter(s => s.isTrending);
-    const regularStyles = styles.filter(s => !s.isTrending);
+    // Helper to get display price for cards (minimum of variations or single price)
+    const getDisplayPrice = (style: HairStyle) => {
+        if (style.priceVariations && style.priceVariations.length > 0) {
+            return Math.min(...style.priceVariations.map(v => v.price));
+        }
+        return style.price || 0;
+    };
+
+    // Check if style has variations
+    const hasVariations = (style: HairStyle): boolean => {
+        return !!(style.priceVariations && style.priceVariations.length > 0);
+    };
+
+    // Filter styles by search query
+    const filteredStyles = styles.filter(style => {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase();
+        return (
+            style.name.toLowerCase().includes(query) ||
+            style.description?.toLowerCase().includes(query)
+        );
+    });
+
+    const trendingStyles = filteredStyles.filter(s => s.isTrending);
+    const regularStyles = filteredStyles.filter(s => !s.isTrending);
 
     if (loading) {
         return (
@@ -97,6 +140,48 @@ export default function CategoryStylesPage() {
                 </p>
             </div>
 
+            {/* Search Bar */}
+            {styles.length > 3 && (
+                <div className="mb-6">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Search styles..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full px-4 py-3 pl-11 bg-gray-900 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:border-white/30 focus:outline-none"
+                        />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <p className="text-sm text-gray-500 mt-2">
+                            {filteredStyles.length} of {styles.length} styles match
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {/* No Results */}
+            {searchQuery && filteredStyles.length === 0 && (
+                <div className="text-center py-12">
+                    <p className="text-gray-400">No styles match "{searchQuery}"</p>
+                    <button
+                        onClick={() => setSearchQuery('')}
+                        className="mt-2 text-white/70 hover:text-white underline text-sm"
+                    >
+                        Clear search
+                    </button>
+                </div>
+            )}
+
             {/* Trending Section */}
             {trendingStyles.length > 0 && (
                 <div className="mb-10">
@@ -110,8 +195,10 @@ export default function CategoryStylesPage() {
                                 key={style._id}
                                 style={style}
                                 index={index}
-                                onSelect={handleSelectStyle}
+                                onSelect={handleStyleClick}
                                 formatPrice={formatPrice}
+                                getDisplayPrice={getDisplayPrice}
+                                hasVariations={hasVariations}
                             />
                         ))}
                     </div>
@@ -128,8 +215,10 @@ export default function CategoryStylesPage() {
                                 key={style._id}
                                 style={style}
                                 index={index}
-                                onSelect={handleSelectStyle}
+                                onSelect={handleStyleClick}
                                 formatPrice={formatPrice}
+                                getDisplayPrice={getDisplayPrice}
+                                hasVariations={hasVariations}
                             />
                         ))}
                     </div>
@@ -144,6 +233,14 @@ export default function CategoryStylesPage() {
                     </Link>
                 </div>
             )}
+
+            {/* Style Detail Modal */}
+            <StyleDetailModal
+                style={selectedStyleForModal}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSelect={handleModalSelect}
+            />
         </div>
     );
 }
@@ -153,12 +250,19 @@ function StyleCard({
     index,
     onSelect,
     formatPrice,
+    getDisplayPrice,
+    hasVariations,
 }: {
     style: HairStyle;
     index: number;
     onSelect: (style: HairStyle) => void;
     formatPrice: (price: number) => string;
+    getDisplayPrice: (style: HairStyle) => number;
+    hasVariations: (style: HairStyle) => boolean;
 }) {
+    const displayPrice = getDisplayPrice(style);
+    const showFromPrefix = hasVariations(style);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -194,7 +298,8 @@ function StyleCard({
 
                 <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-white">
-                        {formatPrice(style.price || 10)}
+                        {showFromPrefix && <span className="text-sm font-normal text-gray-300">From </span>}
+                        {formatPrice(displayPrice || 10)}
                     </span>
                     {style.duration && (
                         <span className="text-xs text-gray-300 flex items-center gap-1">

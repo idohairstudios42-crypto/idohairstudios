@@ -22,6 +22,13 @@ const SystemSettingsSchema = new mongoose.Schema(
       type: Number,
       default: 2,
       description: 'Default price for services when not specified'
+    },
+    depositPercentage: {
+      type: Number,
+      default: 22,
+      min: 0,
+      max: 100,
+      description: 'Percentage of total that customers pay upfront as deposit'
     }
   },
   {
@@ -30,13 +37,13 @@ const SystemSettingsSchema = new mongoose.Schema(
 );
 
 // Add a static method to get the current settings
-SystemSettingsSchema.statics.getCurrentSettings = async function() {
+SystemSettingsSchema.statics.getCurrentSettings = async function () {
   // Always return the first document or create one with defaults if none exists
   const settings = await this.findOne({});
   if (settings) {
     return settings;
   }
-  
+
   return await this.create({});
 };
 

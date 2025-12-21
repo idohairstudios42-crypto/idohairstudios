@@ -178,9 +178,9 @@ export default function Home() {
               <Phone size={12} className="mr-1" />
               +233 54 894 7612
             </a>
-            <a href="mailto:thehairengineer.gh@gmail.com" className="flex items-center text-white/70 hover:text-white transition-colors duration-300 text-[10px] sm:text-xs">
-              <Mail size={12} className="mr-1" />
-              thehairengineer.gh@gmail.com
+            <a href="mailto:idohairstudios42@gmail.com" className="flex items-center text-white/70 hover:text-white transition-colors duration-300 text-[10px] sm:text-xs">
+              <Mail size={16} className="mr-2 text-pink-500" />
+              idohairstudios42@gmail.com
             </a>
           </motion.div>
 
